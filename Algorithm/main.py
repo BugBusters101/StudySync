@@ -1,6 +1,6 @@
-from data import load_mock_users
-from similarity import preprocess_users, compute_similarity
-from weights import QLearningWeightAdjuster
+from .data import load_mock_users
+from .similarity import preprocess_users, compute_similarity
+from .weights import QLearningWeightAdjuster
 import pandas as pd
 
 
