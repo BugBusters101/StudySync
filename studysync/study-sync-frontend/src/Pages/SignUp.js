@@ -13,12 +13,14 @@ const Signup = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if(firstName && lastName && email && password) {
-      // Add your signup logic here
-      navigate('/dashboard');
-    } else {
-      setError('Please fill in all required fields');
-    }
+    e.preventDefault();
+  if(firstName && lastName && email && password) {
+    // Add your actual signup API call here
+    // After successful response from backend:
+    navigate('/preferences'); // 👈 Changed from '/dashboard'
+  } else {
+    setError('Please fill in all required fields');
+  }
   };
 
   return (

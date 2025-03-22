@@ -12,7 +12,7 @@ $dark: #212529;
 
 // Bootstrap Overrides
 $font-family-base: 'Inter', sans-serif;
-$headings-font-family: 'Space Grotesk', sans-serif;
+$headings-font-family: 'Space+Grotesk', sans-serif;
 $border-radius: 8px;
 $box-shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
 $box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -77,6 +77,65 @@ body {
       border-color: $secondary;
       box-shadow: 0 0 0 0.25rem rgba($secondary, 0.25);
     }
+  }
+}
+
+// Preferences Form
+.preferences-form {
+  .form-label {
+    font-weight: 600;
+    color: $primary;
+    margin-bottom: 1rem;
+  }
+
+  .form-check {
+    margin-bottom: 0.5rem;
+    &-input {
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-top: 0.25rem;
+      &:checked {
+        background-color: $primary;
+        border-color: $primary;
+      }
+    }
+    &-label {
+      padding-left: 0.5rem;
+      border-radius: $border-radius;
+      transition: all 0.2s ease;
+      &:hover {
+        background-color: rgba($primary, 0.05);
+      }
+    }
+  }
+
+  .form-select {
+    border: 2px solid $primary;
+    &:focus {
+      border-color: $secondary;
+      box-shadow: 0 0 0 0.25rem rgba($secondary, 0.25);
+    }
+  }
+
+  .form-section {
+    background: rgba($light, 0.8);
+    border-radius: $border-radius;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba($primary, 0.1);
+
+    &-title {
+      color: $primary;
+      border-bottom: 2px solid rgba($primary, 0.1);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  .checkbox-group {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 }
 
@@ -151,5 +210,15 @@ body {
 
   .auth-card {
     margin-top: 2rem;
+  }
+
+  .preferences-form {
+    .checkbox-group {
+      grid-template-columns: 1fr;
+    }
+
+    .form-section {
+      padding: 1rem;
+    }
   }
 }
