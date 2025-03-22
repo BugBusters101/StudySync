@@ -11,17 +11,28 @@ const Signup = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    e.preventDefault();
-  if(firstName && lastName && email && password) {
-    // Add your actual signup API call here
-    // After successful response from backend:
-    navigate('/preferences'); // 👈 Changed from '/dashboard'
-  } else {
-    setError('Please fill in all required fields');
-  }
-  };
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ firstname: firstName, lastname: lastName, email, password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        navigate('/preferences');
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);  // Log the error
+      setError('An error occurred. Please try again.');
+    }
+};
 
   return (
     <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: '80vh' }}>
