@@ -4,18 +4,31 @@ import GoogleLoginButton from '../components/GoogleLoginButton';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [firstname, setFirstname] = useState('');
+  const [lastname, setLastname] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your authentication logic here
-    if(email && password) {
-      navigate('/dashboard');
-    } else {
-      setError('Please fill in all fields');
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ firstname, lastname, password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        navigate('/dashboard');
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again.');
     }
   };
 
@@ -28,12 +41,22 @@ const Login = () => {
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
+              <Form.Label>First Name</Form.Label>
               <Form.Control
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={firstname}
+                onChange={(e) => setFirstname(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Last Name</Form.Label>
+              <Form.Control
+                type="text"
+                required
+                value={lastname}
+                onChange={(e) => setLastname(e.target.value)}
               />
             </Form.Group>
 
