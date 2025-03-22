@@ -1,6 +1,6 @@
-from data import load_mock_users
-from similarity import preprocess_users, compute_similarity
-from weights import QLearningWeightAdjuster
+from .data import load_mock_users
+from .similarity import preprocess_users, compute_similarity
+from .weights import QLearningWeightAdjuster
 
 
 def initialize_algorithm():
@@ -19,18 +19,43 @@ def initialize_algorithm():
     return users_df, processed_users, q_agent
 
 
-def find_top_matches(user_id, similarity_matrix, users_df, top_k=1):
-    """Find top-k matches for a given user."""
+def find_top_matches(user_id, similarity_matrix, users_df, top_k=3):
+    """
+    Find top-k matches for a given user.
+
+    Args:
+        user_id (int): The index of the user in the similarity matrix.
+        similarity_matrix (numpy.ndarray): The similarity matrix.
+        users_df (pd.DataFrame): DataFrame containing user profiles.
+        top_k (int): Number of top matches to return.
+
+    Returns:
+        list: A list of dictionaries containing match details.
+    """
     similarities = similarity_matrix[user_id]
     top_matches = sorted(enumerate(similarities), key=lambda x: x[1], reverse=True)[1:top_k + 1]  # Skip self
-    return top_matches
+
+    # Prepare match details
+    matches = []
+    for match in top_matches:
+        match_user_id = users_df.iloc[match[0]]["id"]
+        match_score = match[1]
+        shared_subjects = list(set(users_df.iloc[user_id]["subjects"]) & set(users_df.iloc[match[0]]["subjects"]))
+
+        matches.append({
+            "match_user_id": match_user_id,
+            "score": match_score,
+            "shared_subjects": shared_subjects
+        })
+
+    return matches
 
 
 def simulate_feedback(user_id, top_matches, users_df):
     """Simulate user feedback for top matches (e.g., 1-5 stars)."""
     print(f"\n🎯 Top match(es) for User {users_df.iloc[user_id]['id']}:")
     for match in top_matches:
-        print(f"User {users_df.iloc[match[0]]['id']} - Score: {match[1]:.2f}")
+        print(f"User {match['match_user_id']} - Score: {match['score']:.2f}")
 
     # Simulate feedback (e.g., 4/5 stars for all matches)
     return 4  # Replace with actual user input in a real app
@@ -44,11 +69,12 @@ def run_feedback_loop(users_df, processed_users, q_agent, num_iterations=3):
 
         # Find top matches for user 0
         user_id = 0
-        top_matches = find_top_matches(user_id, similarity_matrix, users_df, top_k=1)
+        top_matches = find_top_matches(user_id, similarity_matrix, users_df, top_k=3)
 
         # Simulate feedback and update weights
         feedback = simulate_feedback(user_id, top_matches, users_df)
         new_weights = q_agent.update_weights(feedback)
+        print(f"\n🔄 Updated weights: {new_weights}")
 
 
 def main():
