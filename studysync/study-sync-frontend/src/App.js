@@ -4,6 +4,7 @@ import Home from './Pages/Home';
 import Login from './Pages/Login';
 import Signup from './Pages/SignUp';
 import Dashboard from './Pages/Dashboard';
+import PreferencesForm from './Pages/PreferenceForm';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/preferences" element={<PreferencesForm />} />
       </Routes>
     </Router>
   );
