@@ -4,18 +4,20 @@ import GoogleLoginButton from '../components/GoogleLoginButton';
 import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if(email && password && username) {
+    if(firstName && lastName && email && password) {
+      // Add your signup logic here
       navigate('/dashboard');
     } else {
-      setError('Please fill in all fields');
+      setError('Please fill in all required fields');
     }
   };
 
@@ -27,15 +29,27 @@ const Signup = () => {
           {error && <Alert variant="danger">{error}</Alert>}
 
           <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Username</Form.Label>
-              <Form.Control
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </Form.Group>
+            <div className="row">
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>First Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>Last Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </Form.Group>
+            </div>
 
             <Form.Group className="mb-3">
               <Form.Label>Email</Form.Label>
@@ -67,7 +81,7 @@ const Signup = () => {
 
             <div className="mt-4 text-center">
               <span className="text-muted">Already have an account? </span>
-              <Button variant="link" onClick={() => navigate('/Login')}>
+              <Button variant="link" onClick={() => navigate('/login')}>
                 Sign In
               </Button>
             </div>
