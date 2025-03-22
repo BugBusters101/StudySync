@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from ..models.profile_model import Profile
 from ..utils.database import get_db_connection
 from Algorithm.main import find_top_matches, initialize_algorithm, compute_similarity
+import numpy as np  # Add this import
 
 matching_bp = Blueprint('matching', __name__)
 
@@ -36,6 +37,11 @@ def generate_matches(user_id):
         return jsonify({"error": "User not found in profiles"}), 404
 
     top_matches = find_top_matches(user_index, similarity_matrix, users_df, top_k=3)
+
+    # Convert NumPy types to native Python types
+    for match in top_matches:
+        match["score"] = float(match["score"])  # Convert numpy.float64 to float
+        match["match_user_id"] = int(match["match_user_id"])  # Convert numpy.int64 to int
 
     # Return matches as JSON
     return jsonify(top_matches), 200
