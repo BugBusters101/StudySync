@@ -14,7 +14,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/login', {
+      const response = await fetch('http://127.0.0.1:5000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,22 +42,12 @@ const Login = () => {
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>First Name</Form.Label>
+              <Form.Label>Email</Form.Label>
               <Form.Control
                 type="text"
                 required
                 value={firstname}
                 onChange={(e) => setFirstname(e.target.value)}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Last Name</Form.Label>
-              <Form.Control
-                type="text"
-                required
-                value={lastname}
-                onChange={(e) => setLastname(e.target.value)}
               />
             </Form.Group>
 
@@ -71,7 +61,7 @@ const Login = () => {
               />
             </Form.Group>
 
-            <Button type="submit" className="w-100 mb-3" variant="primary">
+            <Button type="submit" className="w-100 mb-3" variant="primary" onClick={() => navigate('/dashboard')}>
               Sign In
             </Button>
 

@@ -30,3 +30,19 @@ def signup():
     conn.close()
 
     return jsonify({"message": "Signup successful"}), 201
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """
+    Handle user login.
+    """
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    # Validate user credentials
+    user = User.find_by_email(email)
+    if user and check_password_hash(user['password_hash'], password):
+        return jsonify({"message": "Login successful"}), 200
+
+    return jsonify({"error": "Invalid credentials"}), 401

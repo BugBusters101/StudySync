@@ -84,7 +84,7 @@ const handleSubmit = async (e) => {
               />
             </Form.Group>
 
-            <Button type="submit" className="w-100 mb-3" variant="primary">
+            <Button type="submit" className="w-100 mb-3" variant="primary" onClick={() => navigate('/preferences ')}>
               Sign Up
             </Button>
 

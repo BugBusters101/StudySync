@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Container, Form, Button, Alert, Card, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import Select from 'react-select';
 
 const PreferencesForm = () => {
   const navigate = useNavigate();
@@ -20,7 +21,15 @@ const PreferencesForm = () => {
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const timeSlots = ['Morning (8-11 AM)', 'Afternoon (12-4 PM)', 'Evening (5-8 PM)', 'Night (9 PM-12 AM)'];
   const studyLocations = ['Library', 'Cafe', 'Home', 'Campus Study Room', 'Online'];
-  const communicationMethods = ['In-person', 'Zoom', 'Discord', 'Microsoft Teams', 'Slack'];
+  const learningStyle = ['Auditory','Visual',];
+  const locationDetails= ['In-person', 'Zoom', 'Discord', 'Microsoft Teams', 'Slack'];
+  const subjects = [
+  { value: 'Physics', label: 'Physics' },
+  { value: 'Chemistry', label: 'Chemistry' },
+  { value: 'Mathematics', label: 'Mathematics' },
+  { value: 'Biology', label: 'Biology' },
+  { value: 'English', label: 'English' }
+];
 
   const handleCheckboxChange = (category, value) => {
     setFormData(prev => ({
@@ -48,24 +57,30 @@ const PreferencesForm = () => {
               <Form onSubmit={handleSubmit}>
                 {/* Course Selection */}
                 <Form.Group className="mb-4">
-                  <Form.Label>Select Your Courses</Form.Label>
-                  <Form.Control
-                    as="select"
-                    multiple
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      courses: Array.from(e.target.selectedOptions, option => option.value)
-                    })}
-                  >
-                    <option value="CS101">Computer Science 101</option>
-                    <option value="MATH201">Advanced Mathematics</option>
-                    <option value="PHY301">Physics Fundamentals</option>
-                    <option value="ENG401">Engineering Basics</option>
-                  </Form.Control>
-                  <Form.Text className="text-muted">
-                    Hold CTRL/CMD to select multiple courses
-                  </Form.Text>
-                </Form.Group>
+  <Form.Label>Select Your Subjects</Form.Label>
+  <Select
+    isMulti
+    options={subjects}
+    onChange={(selectedOptions) => setFormData({
+      ...formData,
+      courses: selectedOptions.map(option => option.value)
+    })}
+    placeholder="Search or select subjects..."
+    className="basic-multi-select"
+    classNamePrefix="select"
+    styles={{
+      control: (base) => ({
+        ...base,
+        border: '1px solid #ced4da',
+        borderRadius: '4px',
+        padding: '2px 4px'
+      })
+    }}
+  />
+  <Form.Text className="text-muted">
+    Start typing to search or click to select multiple subjects
+  </Form.Text>
+</Form.Group>
 
                 {/* Availability */}
                 <div className="mb-4">
