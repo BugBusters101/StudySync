@@ -1,6 +1,7 @@
-from .data import load_mock_users
-from .similarity import preprocess_users, compute_similarity
-from .weights import QLearningWeightAdjuster
+from data import load_mock_users
+from similarity import preprocess_users, compute_similarity
+from weights import QLearningWeightAdjuster
+import pandas as pd
 
 
 def initialize_algorithm():
@@ -13,7 +14,7 @@ def initialize_algorithm():
 
     # Initialize Q-learning agent with default weights
     q_agent = QLearningWeightAdjuster(
-        initial_weights={"subjects": 0.5, "availability": 0.3, "learning_style": 0.2, "location": 0.8}
+        initial_weights={"subjects": 0.5, "availability": 0.3, "days_of_week" : 0.4, "learning_style": 0.2, "location": 0.8}
     )
 
     return users_df, processed_users, q_agent

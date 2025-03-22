@@ -11,6 +11,9 @@ def preprocess_users(df):
     subjects_encoded = mlb.fit_transform(df['subjects'])
     subjects_df = pd.DataFrame(subjects_encoded, columns=[f"subject_{cls}" for cls in mlb.classes_])
 
+    days_of_week_encoded = mlb.fit_transform(df['days_of_week'])
+    days_of_week_df = pd.DataFrame(days_of_week_encoded, columns=[f"days_of_week_{cls}" for cls in mlb.classes_])
+
     # 2. Encode availability (multi-label)
     availability_encoded = mlb.fit_transform(df['availability'])
     availability_df = pd.DataFrame(availability_encoded, columns=[f"availability_{cls}" for cls in mlb.classes_])
@@ -25,7 +28,7 @@ def preprocess_users(df):
     location_df = pd.get_dummies(df['location_combined'], prefix='loc')
 
     # Combine all features
-    return pd.concat([subjects_df, availability_df, learning_style_df, location_df], axis=1)
+    return pd.concat([subjects_df, days_of_week_df, availability_df, learning_style_df, location_df], axis=1)
 
 
 def compute_similarity(users_df, weights):
@@ -34,12 +37,14 @@ def compute_similarity(users_df, weights):
 
     # Identify columns for each feature group
     subject_cols = [col for col in users_df.columns if col.startswith("subject_")]
+    days_of_week_cols = [col for col in users_df.columns if col.startswith("days_of_week_")]
     availability_cols = [col for col in users_df.columns if col.startswith("availability_")]
     style_cols = [col for col in users_df.columns if col.startswith("style_")]
     loc_cols = [col for col in users_df.columns if col.startswith("loc_")]
 
     # Apply weights
     weighted_vectors[subject_cols] *= weights["subjects"]
+    weighted_vectors[days_of_week_cols] *= weights["days_of_week"]
     weighted_vectors[availability_cols] *= weights["availability"]
     weighted_vectors[style_cols] *= weights["learning_style"]
     weighted_vectors[loc_cols] *= weights["location"]
