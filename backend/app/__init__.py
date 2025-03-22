@@ -13,8 +13,6 @@ login = LoginManager(app)
 login.login_view = 'login'
 
 
-from app import views, models
-
 @app.shell_context_processor
 def make_shell_context():
     return dict(db=db, generate_password_hash=generate_password_hash)
