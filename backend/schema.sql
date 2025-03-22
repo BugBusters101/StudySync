@@ -13,6 +13,7 @@ CREATE TABLE Profile (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL UNIQUE,     -- Links to User table
     subjects TEXT,                       -- JSON array of subjects (e.g., ["Math", "ML"])
+    days_of_week TEXT,                   -- JSON array of days (e.g., ["Monday", "Wednesday"])
     availability TEXT,                   -- JSON array of time slots (e.g., ["mornings", "evenings"])
     learning_style TEXT,                 -- e.g., "visual", "auditory", "hands-on"
     location_type TEXT,                  -- e.g., "in-person", "virtual"

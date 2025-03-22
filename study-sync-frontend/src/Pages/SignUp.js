@@ -24,7 +24,7 @@ const handleSubmit = async (e) => {
 
       const data = await response.json();
       if (response.ok) {
-        navigate('/dashboard');
+        navigate('/preferences');
       } else {
         setError(data.message);
       }
@@ -84,7 +84,7 @@ const handleSubmit = async (e) => {
               />
             </Form.Group>
 
-            <Button type="submit" className="w-100 mb-3" variant="primary">
+            <Button type="submit" className="w-100 mb-3" variant="primary" onClick={() => navigate('/preferences ')}>
               Sign Up
             </Button>
 
