@@ -222,3 +222,65 @@ body {
     }
   }
 }
+// Chat Page
+.chat-page {
+  height: calc(100vh - 76px);
+
+  .list-group-item {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+
+    &:hover {
+      background-color: rgba($primary, 0.05);
+    }
+
+    &.active {
+      background-color: rgba($primary, 0.1);
+      border-color: rgba($primary, 0.1);
+      color: $primary;
+    }
+  }
+}
+
+// Chat Messages
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+
+  .message-bubble {
+    max-width: 70%;
+    padding: 0.75rem;
+    border-radius: $border-radius;
+
+    &.me {
+      background: rgba($primary, 0.1);
+      margin-left: auto;
+
+      .message-time {
+        color: rgba($primary, 0.7);
+      }
+    }
+
+    &.them {
+      background: rgba($secondary, 0.1);
+      margin-right: auto;
+
+      .message-time {
+        color: rgba($secondary, 0.7);
+      }
+    }
+
+    .message-content {
+      margin-bottom: 0.25rem;
+    }
+
+    .message-time {
+      font-size: 0.75rem;
+      text-align: right;
+    }
+  }
+}
