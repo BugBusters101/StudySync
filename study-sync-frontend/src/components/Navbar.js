@@ -1,7 +1,8 @@
-import { Container, Nav, Navbar } from 'react-bootstrap';
+import {Badge, Container, Nav, Navbar} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faSignInAlt, faUserPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
+import { FaComments } from 'react-icons/fa6';  // For chat icon
 
 const CustomNavbar = () => {
   return (
@@ -36,6 +37,11 @@ const CustomNavbar = () => {
             </Nav.Link>
           </Nav>
         </Navbar.Collapse>
+        <Nav.Link as={Link} to="/chat" className="d-flex align-items-center gap-1">
+          <FaComments />
+            <span>Chat</span>
+            <Badge bg="danger" className="ms-1">3</Badge>
+        </Nav.Link>
       </Container>
     </Navbar>
   );
