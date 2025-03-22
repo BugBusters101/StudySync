@@ -16,12 +16,17 @@ def save_preferences():
     learning_style = data.get('learning_style', '')
     location_type = data.get('location_type', [])
     location_details = data.get('location_details', [])
+    subjects = data.get('subjects')
+    availability = data.get('availability')
+    learning_style = data.get('learning_style')
+    location_type = data.get('location_type')
+    location_details = data.get('location_details')
 
     conn = get_db_connection()
     try:
         conn.execute(
-            'INSERT INTO Profile (user_id, subjects, days_of_week, availability, learning_style, location_type, location_details) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (user_id, ','.join(subjects), ','.join(availability.get('days', [])), ','.join(availability.get('timeSlots', [])), learning_style, ','.join(location_type), ','.join(location_details))
+            'INSERT INTO Profile (user_id, subjects, availability, learning_style, location_type, location_details) VALUES (?, ?, ?, ?, ?, ?)',
+            (user_id, subjects, availability, learning_style, location_type, location_details)
         )
         conn.commit()
         return jsonify({"message": "Preferences saved successfully"}), 201
