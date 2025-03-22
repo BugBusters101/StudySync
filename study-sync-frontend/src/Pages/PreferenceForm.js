@@ -31,14 +31,31 @@ const PreferencesForm = () => {
     { value: 'English', label: 'English' }
   ];
 
-  const handleCheckboxChange = (category, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [category]: prev[category].includes(value)
+const handleCheckboxChange = (category, value, isNested = false) => {
+  setFormData(prev => {
+    if (isNested) {
+      const updatedCategory = prev.availability[category]?.includes(value)
+        ? prev.availability[category].filter(item => item !== value)
+        : [...(prev.availability[category] || []), value];
+      return {
+        ...prev,
+        availability: {
+          ...prev.availability,
+          [category]: updatedCategory
+        }
+      };
+    } else {
+      const updatedCategory = prev[category]?.includes(value)
         ? prev[category].filter(item => item !== value)
-        : [...prev[category], value]
-    }));
-  };
+        : [...(prev[category] || []), value];
+      return {
+        ...prev,
+        [category]: updatedCategory
+      };
+    }
+  });
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

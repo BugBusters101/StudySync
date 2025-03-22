@@ -11,6 +11,11 @@ preferences_bp = Blueprint('preferences', __name__)
 def save_preferences():
     data = request.get_json()
     user_id = current_user.id
+    subjects = data.get('subjects', [])
+    availability = data.get('availability', {})
+    learning_style = data.get('learning_style', '')
+    location_type = data.get('location_type', [])
+    location_details = data.get('location_details', [])
     subjects = data.get('subjects')
     availability = data.get('availability')
     learning_style = data.get('learning_style')
