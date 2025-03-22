@@ -14,7 +14,7 @@ const Signup = () => {
 const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/signup', {
+      const response = await fetch('http://127.0.0.1:5000/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ const handleSubmit = async (e) => {
         setError(data.message);
       }
     } catch (error) {
-      console.error('Error:', error);  // Log the error
+      console.error('Error:', error.stackTrace);  // Log the error
       setError('An error occurred. Please try again.');
     }
 };
