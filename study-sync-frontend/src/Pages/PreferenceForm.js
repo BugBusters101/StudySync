@@ -16,20 +16,20 @@ const PreferencesForm = () => {
     groupSize: '',
     communicationPreference: []
   });
+  const [error, setError] = useState('');
 
-  // Available options
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const timeSlots = ['Morning (8-11 AM)', 'Afternoon (12-4 PM)', 'Evening (5-8 PM)', 'Night (9 PM-12 AM)'];
   const studyLocations = ['Library', 'Cafe', 'Home', 'Campus Study Room', 'Online'];
   const learningStyle = ['Auditory','Visual',];
   const locationDetails= ['In-person', 'Zoom', 'Discord', 'Microsoft Teams', 'Slack'];
   const subjects = [
-  { value: 'Physics', label: 'Physics' },
-  { value: 'Chemistry', label: 'Chemistry' },
-  { value: 'Mathematics', label: 'Mathematics' },
-  { value: 'Biology', label: 'Biology' },
-  { value: 'English', label: 'English' }
-];
+    { value: 'Physics', label: 'Physics' },
+    { value: 'Chemistry', label: 'Chemistry' },
+    { value: 'Mathematics', label: 'Mathematics' },
+    { value: 'Biology', label: 'Biology' },
+    { value: 'English', label: 'English' }
+  ];
 
   const handleCheckboxChange = (category, value) => {
     setFormData(prev => ({
@@ -40,11 +40,33 @@ const PreferencesForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add validation and API call here
-    console.log('Submitted Preferences:', formData);
-    navigate('/dashboard');
+    try {
+      const response = await fetch('http://127.0.0.1:5000/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subjects: formData.courses,
+          availability: formData.availability,
+          learning_style: formData.studyHabits,
+          location_type: formData.locationPreference,
+          location_details: formData.communicationPreference
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        navigate('/dashboard');
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error.stackTrace);
+      setError('An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -54,35 +76,34 @@ const PreferencesForm = () => {
           <Card className="auth-card">
             <Card.Body>
               <h2 className="text-center mb-4">Study Preferences Setup</h2>
+              {error && <Alert variant="danger">{error}</Alert>}
               <Form onSubmit={handleSubmit}>
-                {/* Course Selection */}
                 <Form.Group className="mb-4">
-  <Form.Label>Select Your Subjects</Form.Label>
-  <Select
-    isMulti
-    options={subjects}
-    onChange={(selectedOptions) => setFormData({
-      ...formData,
-      courses: selectedOptions.map(option => option.value)
-    })}
-    placeholder="Search or select subjects..."
-    className="basic-multi-select"
-    classNamePrefix="select"
-    styles={{
-      control: (base) => ({
-        ...base,
-        border: '1px solid #ced4da',
-        borderRadius: '4px',
-        padding: '2px 4px'
-      })
-    }}
-  />
-  <Form.Text className="text-muted">
-    Start typing to search or click to select multiple subjects
-  </Form.Text>
-</Form.Group>
+                  <Form.Label>Select Your Subjects</Form.Label>
+                  <Select
+                    isMulti
+                    options={subjects}
+                    onChange={(selectedOptions) => setFormData({
+                      ...formData,
+                      courses: selectedOptions.map(option => option.value)
+                    })}
+                    placeholder="Search or select subjects..."
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px',
+                        padding: '2px 4px'
+                      })
+                    }}
+                  />
+                  <Form.Text className="text-muted">
+                    Start typing to search or click to select multiple subjects
+                  </Form.Text>
+                </Form.Group>
 
-                {/* Availability */}
                 <div className="mb-4">
                   <Form.Label>Availability</Form.Label>
                   <div className="mb-3">
@@ -115,7 +136,6 @@ const PreferencesForm = () => {
                   </div>
                 </div>
 
-                {/* Study Habits */}
                 <Form.Group className="mb-4">
                   <Form.Label>Preferred Study Time</Form.Label>
                   <div className="d-flex gap-4">
@@ -136,7 +156,6 @@ const PreferencesForm = () => {
                   </div>
                 </Form.Group>
 
-                {/* Location Preference */}
                 <Form.Group className="mb-4">
                   <Form.Label>Preferred Study Locations</Form.Label>
                   <div className="d-flex flex-wrap gap-3">
@@ -152,7 +171,6 @@ const PreferencesForm = () => {
                   </div>
                 </Form.Group>
 
-                {/* Group Size */}
                 <Form.Group className="mb-4">
                   <Form.Label>Preferred Group Size</Form.Label>
                   <Form.Select
@@ -167,11 +185,10 @@ const PreferencesForm = () => {
                   </Form.Select>
                 </Form.Group>
 
-                {/* Communication Preference */}
                 <Form.Group className="mb-4">
                   <Form.Label>Preferred Communication Methods</Form.Label>
                   <div className="d-flex flex-wrap gap-3">
-                    {communicationMethods.map(method => (
+                    {locationDetails.map(method => (
                       <Form.Check
                         key={method}
                         type="checkbox"
