@@ -37,6 +37,7 @@ def signup():
 def login():
     data = request.get_json()
     user = User.validate_login(data['email'], data['password'])
+    print(user.id)
 
     if user:
         conn = get_db_connection()

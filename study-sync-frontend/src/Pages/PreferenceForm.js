@@ -50,15 +50,14 @@ const PreferencesForm = () => {
     return;
   }
 
-
     try {
       const response = await fetch('http://127.0.0.1:5000/preferences', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData),
-        credentials: 'include'
       });
 
       const data = await response.json();
@@ -81,7 +80,7 @@ const PreferencesForm = () => {
             <Card.Body>
               <h2 className="text-center mb-4">Study Preferences Setup</h2>
               {error && <Alert variant="danger">{error}</Alert>}
-              <Form onSubmit={handleSubmit}>
+              <Form>
                 <Form.Group className="mb-4">
                   <Form.Label>Select Your Subjects</Form.Label>
                   <Select
@@ -185,7 +184,7 @@ const PreferencesForm = () => {
                   </div>
                 </Form.Group>
 
-                <Button type="submit" className="w-100" variant="primary">
+                <Button type="submit" className="w-100" variant="primary" onClick={handleSubmit}>
                   Save Preferences
                 </Button>
               </Form>
