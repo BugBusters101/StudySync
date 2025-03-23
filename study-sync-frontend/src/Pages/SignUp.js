@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Container, Form, Button, Alert, Card } from 'react-bootstrap';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import { useNavigate } from 'react-router-dom';
@@ -11,15 +12,24 @@ const Signup = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Generate unique user ID
+      const userId = uuidv4();
+
       const response = await fetch('http://127.0.0.1:5000/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ firstname: firstName, lastname: lastName, email, password }),
+        body: JSON.stringify({
+          firstname: firstName,
+          lastname: lastName,
+          email,
+          password,
+          userId // Include generated user ID in payload
+        }),
       });
 
       const data = await response.json();
@@ -29,10 +39,10 @@ const handleSubmit = async (e) => {
         setError(data.message);
       }
     } catch (error) {
-      console.error('Error:', error.stackTrace);  // Log the error
+      console.error('Error:', error);
       setError('An error occurred. Please try again.');
     }
-};
+  };
 
   return (
     <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: '80vh' }}>
@@ -84,7 +94,7 @@ const handleSubmit = async (e) => {
               />
             </Form.Group>
 
-            <Button type="submit" className="w-100 mb-3" variant="primary" onClick={() => navigate('/preferences ')}>
+            <Button type="submit" className="w-100 mb-3" variant="primary">
               Sign Up
             </Button>
 
