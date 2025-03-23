@@ -5,7 +5,6 @@ import ChatWindow from '../components/ChatWindow';
 
 const ChatPage = () => {
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const userId = 1; // Replace with actual user ID
 
   return (
     <Container fluid className="chat-page">
@@ -14,7 +13,7 @@ const ChatPage = () => {
           <ChatList onSelectMatch={setSelectedMatch} />
         </Col>
         <Col md={8}>
-          <ChatWindow selectedMatch={selectedMatch} userId={userId} />
+          <ChatWindow selectedMatch={selectedMatch} />
         </Col>
       </Row>
     </Container>
