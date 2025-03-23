@@ -20,7 +20,7 @@ def send_message():
 
     return jsonify({'status': 'Message sent'}), 201
 
-@chat_bp.route('/chat/messages/<int:user_id>/<int:match_id>', methods=['GET'])
+@chat_bp.route('/chat/<int:user_id>/<int:match_id>', methods=['GET'])
 def get_messages(user_id, match_id):
     conn = get_db_connection()
     messages = conn.execute(
