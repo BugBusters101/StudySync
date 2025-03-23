@@ -34,7 +34,7 @@ def get_messages(user_id, match_id):
 @chat_bp.route('/chat/users', methods=['GET'])
 def get_users():
     conn = get_db_connection()
-    users = conn.execute('SELECT id, first_name, last_name FROM User').fetchall()
+    users = conn.execute('SELECT id, first_name, last_name FROM users').fetchall()
     conn.close()
 
     return jsonify([{'id': user['id'], 'name': f"{user['first_name']} {user['last_name']}"} for user in users]), 200
