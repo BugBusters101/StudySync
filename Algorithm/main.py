@@ -25,7 +25,7 @@ def find_top_matches(user_id, similarity_matrix, users_df, top_k=3):
     Find top-k matches for a given user.
 
     Args:
-        user_id (int): The index of the user in the similarity matrix.
+        user_id (int): The user_id of the user.
         similarity_matrix (numpy.ndarray): The similarity matrix.
         users_df (pd.DataFrame): DataFrame containing user profiles.
         top_k (int): Number of top matches to return.
@@ -33,15 +33,37 @@ def find_top_matches(user_id, similarity_matrix, users_df, top_k=3):
     Returns:
         list: A list of dictionaries containing match details.
     """
-    similarities = similarity_matrix[user_id]
-    top_matches = sorted(enumerate(similarities), key=lambda x: x[1], reverse=True)[1:top_k + 1]  # Skip self
+    # Create a mapping from user_id to index
+    user_id_to_index = {user_id: index for index, user_id in enumerate(users_df["user_id"])}
+
+    # Get the user_index from the user_id
+    user_index = user_id_to_index.get(user_id)
+    if user_index is None:
+        raise ValueError(f"User ID {user_id} not found in users_df")
+
+    # Debug: Check the size of the similarity matrix and user_index
+    print("Similarity Matrix Shape:", similarity_matrix.shape)
+    print("User Index:", user_index)
+
+    # Ensure user_index is within bounds
+    if user_index >= similarity_matrix.shape[0]:
+        raise ValueError(f"User index {user_index} is out of bounds for similarity matrix with size {similarity_matrix.shape[0]}")
+
+    # Get the similarity scores for the user
+    similarities = similarity_matrix[user_index]
+
+    # Find the top-k matches (excluding the user themselves)
+    top_matches = sorted(enumerate(similarities), key=lambda x: x[1], reverse=True)[1:top_k + 1]
 
     # Prepare match details
     matches = []
     for match in top_matches:
-        match_user_id = users_df.iloc[match[0]]["id"]
-        match_score = match[1]
-        shared_subjects = list(set(users_df.iloc[user_id]["subjects"]) & set(users_df.iloc[match[0]]["subjects"]))
+        match_index = match[0]  # Index of the matched user in the similarity matrix
+        match_score = match[1]  # Similarity score
+
+        # Fetch details of the matched user from users_df
+        match_user_id = users_df.iloc[match_index]["user_id"]
+        shared_subjects = list(set(users_df.iloc[user_index]["subjects"]) & set(users_df.iloc[match_index]["subjects"]))
 
         matches.append({
             "match_user_id": match_user_id,
