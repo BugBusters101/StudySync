@@ -42,10 +42,11 @@ def generate_matches(**kwargs):
     Generate matches for a user using the algorithm.
     """
     user_id = kwargs.get('user_id')
+    print(user_id)
     # Fetch the user's profile
     user_profile = Profile.find_by_user_id(user_id)
     if not user_profile:
-        return jsonify({"error": "User profile not found"}), 404
+        return jsonify({"error": "User profile not found in table"}), 404
 
     # Fetch all profiles from the database
     conn = get_db_connection()
@@ -62,7 +63,7 @@ def generate_matches(**kwargs):
     similarity_matrix = compute_similarity(processed_users, q_agent.q_table)
 
     # Find top matches for the user
-    user_index = next((i for i, profile in enumerate(all_profiles) if profile["id"] == user_id), None)
+    user_index = next((i for i, profile in enumerate(all_profiles) if profile["user_id"] == user_id), None)
     if user_index is None:
         return jsonify({"error": "User not found in profiles"}), 404
 
