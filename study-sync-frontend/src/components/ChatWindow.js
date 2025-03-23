@@ -1,28 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
-import { FaPaperPlane } from 'react-icons/fa6';  // For paper plane icon
+import { FaPaperPlane } from 'react-icons/fa6';
 
-const ChatWindow = ({ selectedMatch }) => {
+const ChatWindow = ({ selectedMatch, userId }) => {
   const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState([
-    { id: 1, text: 'Hey! Want to study together?', sender: 'them', time: '10:00 AM' },
-    { id: 2, text: 'Sure! How about tomorrow?', sender: 'me', time: '10:05 AM' },
-    { id: 3, text: 'Perfect! Library at 2 PM?', sender: 'them', time: '10:10 AM' },
-  ]);
+  const [messages, setMessages] = useState([]);
 
-  const handleSendMessage = (e) => {
+  useEffect(() => {
+    if (selectedMatch) {
+      fetchMessages();
+    }
+  }, [selectedMatch]);
+
+  const fetchMessages = async () => {
+    const response = await fetch(`http://127.0.0.1:5000/chat/messages/${userId}/${selectedMatch.id}`);
+    const data = await response.json();
+    setMessages(data);
+  };
+
+  const handleSendMessage = async (e) => {
     e.preventDefault();
+    if (!selectedMatch) {
+      console.error('No match selected');
+      return;
+    }
     if (newMessage.trim()) {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          text: newMessage,
-          sender: 'me',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-      setNewMessage('');
+      const response = await fetch('http://127.0.0.1:5000/chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_id: userId,
+          receiver_id: selectedMatch.id,
+          message: newMessage
+        })
+      });
+      if (response.ok) {
+        const newMsg = {
+          id: messages.length + 1,
+          sender_id: userId,
+          receiver_id: selectedMatch.id,
+          message: newMessage,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => [...prev, newMsg]);
+        setNewMessage('');
+      }
     }
   };
 
@@ -36,10 +58,10 @@ const ChatWindow = ({ selectedMatch }) => {
           {messages.map(message => (
             <div
               key={message.id}
-              className={`message-bubble ${message.sender === 'me' ? 'me' : 'them'}`}
+              className={`message-bubble ${message.sender_id === userId ? 'me' : 'them'}`}
             >
-              <div className="message-content">{message.text}</div>
-              <div className="message-time">{message.time}</div>
+              <div className="message-content">{message.message}</div>
+              <div className="message-time">{message.timestamp}</div>
             </div>
           ))}
         </div>

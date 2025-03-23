@@ -56,6 +56,10 @@ const Dashboard = () => {
     }
   };
 
+  const handleMessageClick = (match_user_id) => {
+    navigate(`/chat/${match_user_id}`);  // Navigate to the chat endpoint
+  };
+
   return (
     <Container className="py-4">
       <Row className="mb-4">
@@ -98,7 +102,7 @@ const Dashboard = () => {
                       Shared Subjects: {match.shared_subjects.join(', ')}
                     </div>
                     <div className="d-flex justify-content-between align-items-center">
-                      <Button variant="outline-primary" size="sm">
+                      <Button variant="outline-primary" size="sm" onClick={() => handleMessageClick(match.match_user_id)}>
                         Message
                       </Button>
                     </div>

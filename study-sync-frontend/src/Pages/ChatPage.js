@@ -10,9 +10,7 @@ const ChatPage = () => {
     <Container fluid className="chat-page">
       <Row className="g-0" style={{ minHeight: '80vh' }}>
         <Col md={4} className="border-end">
-          <ChatList
-            onSelectMatch={setSelectedMatch}
-          />
+          <ChatList onSelectMatch={setSelectedMatch} />
         </Col>
         <Col md={8}>
           <ChatWindow selectedMatch={selectedMatch} />

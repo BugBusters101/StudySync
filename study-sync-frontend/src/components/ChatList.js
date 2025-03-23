@@ -1,18 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ListGroup, Badge } from 'react-bootstrap';
-import { FaCircle } from 'react-icons/fa6';  // For solid circle icon
+import { FaCircle } from 'react-icons/fa6';
 
-const ChatList = ({ matches, onSelectMatch }) => {
-  // Mock data
-  const mockMatches = [
-    { id: 1, name: 'Sarah Johnson', unread: 2, online: true },
-    { id: 2, name: 'Mike Chen', unread: 0, online: false },
-    { id: 3, name: 'Emma Wilson', unread: 5, online: true },
-  ];
+const ChatList = ({ onSelectMatch }) => {
+  const [matches, setMatches] = useState([]);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:5000/chat/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const data = await response.json();
+        console.log('Fetched users:', data); // Log the fetched data
+        setMatches(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+
+    fetchMatches();
+  }, []);
 
   return (
     <ListGroup variant="flush">
-      {mockMatches.map(match => (
+      {matches.map(match => (
         <ListGroup.Item
           key={match.id}
           action
@@ -20,10 +33,7 @@ const ChatList = ({ matches, onSelectMatch }) => {
           className="d-flex justify-content-between align-items-center"
         >
           <div className="d-flex align-items-center gap-2">
-            <FaCircle
-              size={10}
-              className={match.online ? 'text-success' : 'text-secondary'}
-            />
+            <FaCircle size={10} className="text-secondary" />
             <span>{match.name}</span>
           </div>
           {match.unread > 0 && (

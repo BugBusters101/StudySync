@@ -39,7 +39,7 @@ const Navbar = () => {
               <FontAwesomeIcon icon={faHome} />
               <span>Home</span>
             </Nav.Link>
-            {isAuthenticated && (
+
               <>
                 <Nav.Link as={Link} to="/chat" className="d-flex align-items-center gap-1">
                   <FaComments />
@@ -47,7 +47,7 @@ const Navbar = () => {
                   <Badge bg="danger" className="ms-1">3</Badge>
                 </Nav.Link>
               </>
-            )}
+
           </Nav>
 
           {/* Right Side Links */}
