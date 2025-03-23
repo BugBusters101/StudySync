@@ -7,22 +7,19 @@ const PreferencesForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     courses: [],
-    availability: {
-      days: [],
-      timeSlots: []
-    },
-    studyHabits: '',
-    locationPreference: [],
-    groupSize: '',
-    communicationPreference: []
+    days_of_week: [],
+    timeSlots: [],
+    learning_style: '',
+    location_type: [],
+    location_details: []
   });
   const [error, setError] = useState('');
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const timeSlots = ['Morning (8-11 AM)', 'Afternoon (12-4 PM)', 'Evening (5-8 PM)', 'Night (9 PM-12 AM)'];
-  const studyLocations = ['Library', 'Cafe', 'Home', 'Campus Study Room', 'Online'];
-  const learningStyle = ['Auditory','Visual',];
-  const locationDetails= ['In-person', 'Zoom', 'Discord', 'Microsoft Teams', 'Slack'];
+  const studyLocations = ['Virtual', 'in-person'];
+  const learningStyles = ['Auditory', 'Visual', 'Hands-on', 'Reading/Writing'];
+  const locationDetails = ['In-person', 'Zoom', 'Discord', 'Microsoft Teams', 'Slack'];
   const subjects = [
     { value: 'Physics', label: 'Physics' },
     { value: 'Chemistry', label: 'Chemistry' },
@@ -31,20 +28,8 @@ const PreferencesForm = () => {
     { value: 'English', label: 'English' }
   ];
 
-const handleCheckboxChange = (category, value, isNested = false) => {
-  setFormData(prev => {
-    if (isNested) {
-      const updatedCategory = prev.availability[category]?.includes(value)
-        ? prev.availability[category].filter(item => item !== value)
-        : [...(prev.availability[category] || []), value];
-      return {
-        ...prev,
-        availability: {
-          ...prev.availability,
-          [category]: updatedCategory
-        }
-      };
-    } else {
+  const handleCheckboxChange = (category, value) => {
+    setFormData(prev => {
       const updatedCategory = prev[category]?.includes(value)
         ? prev[category].filter(item => item !== value)
         : [...(prev[category] || []), value];
@@ -52,41 +37,41 @@ const handleCheckboxChange = (category, value, isNested = false) => {
         ...prev,
         [category]: updatedCategory
       };
-    }
-  });
-};
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const response = await fetch('http://127.0.0.1:5000/preferences', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        subjects: formData.courses,
-        availability: {
-          days: formData.availability.days,
-          timeSlots: formData.availability.timeSlots
-        },
-        learning_style: formData.studyHabits,
-        location_type: formData.locationPreference,
-        location_details: formData.communicationPreference
-      }),
     });
+  };
 
-    const data = await response.json();
-    if (response.ok) {
-      navigate('/dashboard');
-    } else {
-      setError(data.message);
-    }
-  } catch (error) {
-    console.error('Error:', error.stackTrace);
-    setError('An error occurred. Please try again.');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Retrieve token from localStorage (set after login)
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    setError('Not authenticated. Please login again.');
+    return;
   }
-};
+
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        navigate('/dashboard');
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError('An error occurred. Please try again.');
+    }
+  };
 
   return (
     <Container className="py-5 fade-in">
@@ -123,71 +108,84 @@ const handleSubmit = async (e) => {
                   </Form.Text>
                 </Form.Group>
 
-                <div className="mb-4">
-                 <Form.Group className="mb-4">
-  <Form.Label>Availability</Form.Label>
-  <div className="mb-3">
-    <strong>Days:</strong>
-    <div className="d-flex flex-wrap gap-3 mt-2">
-      {daysOfWeek.map(day => (
-        <Form.Check
-          key={day}
-          type="checkbox"
-          label={day}
-          checked={formData.availability.days.includes(day)}
-          onChange={() => handleCheckboxChange('days', day, true)}
-        />
-      ))}
-    </div>
-  </div>
-  <div>
-    <strong>Time Slots:</strong>
-    <div className="d-flex flex-wrap gap-3 mt-2">
-      {timeSlots.map(time => (
-        <Form.Check
-          key={time}
-          type="checkbox"
-          label={time}
-          checked={formData.availability.timeSlots.includes(time)}
-          onChange={() => handleCheckboxChange('timeSlots', time, true)}
-        />
-      ))}
-    </div>
-  </div>
-</Form.Group>
+                <Form.Group className="mb-4">
+                  <Form.Label>Availability</Form.Label>
+                  <div className="mb-3">
+                    <strong>Days:</strong>
+                    <div className="d-flex flex-wrap gap-3 mt-2">
+                      {daysOfWeek.map(day => (
+                        <Form.Check
+                          key={day}
+                          type="checkbox"
+                          label={day}
+                          checked={formData.days_of_week.includes(day)}
+                          onChange={() => handleCheckboxChange('days_of_week', day)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <strong>Time Slots:</strong>
+                    <div className="d-flex flex-wrap gap-3 mt-2">
+                      {timeSlots.map(time => (
+                        <Form.Check
+                          key={time}
+                          type="checkbox"
+                          label={time}
+                          checked={formData.timeSlots.includes(time)}
+                          onChange={() => handleCheckboxChange('timeSlots', time)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </Form.Group>
 
-<Form.Group className="mb-4">
-  <Form.Label>Preferred Study Locations</Form.Label>
-  <div className="d-flex flex-wrap gap-3">
-    {studyLocations.map(location => (
-      <Form.Check
-        key={location}
-        type="checkbox"
-        label={location}
-        checked={formData.locationPreference.includes(location)}
-        onChange={() => handleCheckboxChange('locationPreference', location)}
-      />
-    ))}
-  </div>
-</Form.Group>
+                <Form.Group className="mb-4">
+                  <Form.Label>Preferred Learning Style</Form.Label>
+                  <div className="d-flex flex-wrap gap-3">
+                    {learningStyles.map(style => (
+                      <Form.Check
+                        key={style}
+                        type="checkbox"
+                        label={style}
+                        checked={formData.learning_style.includes(style)}
+                        onChange={() => handleCheckboxChange('learning_style', style)}
+                      />
+                    ))}
+                  </div>
+                </Form.Group>
 
-<Form.Group className="mb-4">
-  <Form.Label>Preferred Communication Methods</Form.Label>
-  <div className="d-flex flex-wrap gap-3">
-    {locationDetails.map(method => (
-      <Form.Check
-        key={method}
-        type="checkbox"
-        label={method}
-        checked={formData.communicationPreference.includes(method)}
-        onChange={() => handleCheckboxChange('communicationPreference', method)}
-      />
-    ))}
-  </div>
-</Form.Group>
-                </div>
+                <Form.Group className="mb-4">
+                  <Form.Label>Preferred Study Locations</Form.Label>
+                  <div className="d-flex flex-wrap gap-3">
+                    {studyLocations.map(location => (
+                      <Form.Check
+                        key={location}
+                        type="checkbox"
+                        label={location}
+                        checked={formData.location_type.includes(location)}
+                        onChange={() => handleCheckboxChange('location_type', location)}
+                      />
+                    ))}
+                  </div>
+                </Form.Group>
 
-                <Button type="submit" className="w-100" variant="primary" onClick={() => navigate('/dashboard')}>
+                <Form.Group className="mb-4">
+                  <Form.Label>Preferred Communication Methods</Form.Label>
+                  <div className="d-flex flex-wrap gap-3">
+                    {locationDetails.map(method => (
+                      <Form.Check
+                        key={method}
+                        type="checkbox"
+                        label={method}
+                        checked={formData.location_details.includes(method)}
+                        onChange={() => handleCheckboxChange('location_details', method)}
+                      />
+                    ))}
+                  </div>
+                </Form.Group>
+
+                <Button type="submit" className="w-100" variant="primary">
                   Save Preferences
                 </Button>
               </Form>

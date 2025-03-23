@@ -4,8 +4,6 @@ import GoogleLoginButton from '../components/GoogleLoginButton';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,11 +17,12 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email, password: password }),
       });
 
       const data = await response.json();
       if (response.ok) {
+        localStorage.setItem('token', data.token);
         navigate('/dashboard');
       } else {
         setError(data.message);
@@ -44,10 +43,10 @@ const Login = () => {
             <Form.Group className="mb-3">
               <Form.Label>Email</Form.Label>
               <Form.Control
-                type="text"
+                type="email"
                 required
-                value={firstname}
-                onChange={(e) => setFirstname(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </Form.Group>
 
@@ -61,7 +60,7 @@ const Login = () => {
               />
             </Form.Group>
 
-            <Button type="submit" className="w-100 mb-3" variant="primary" onClick={() => navigate('/dashboard')}>
+            <Button type="submit" className="w-100 mb-3" variant="primary">
               Sign In
             </Button>
 
