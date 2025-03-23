@@ -1,5 +1,5 @@
                     -- User table: Stores user authentication details
-CREATE TABLE User (
+CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,            -- User first name
     last_name TEXT NOT NULL,             -- User last name
@@ -18,7 +18,7 @@ CREATE TABLE Profile (
     learning_style TEXT,                 -- e.g., "visual", "auditory", "hands-on"
     location_type TEXT,                  -- e.g., "in-person", "virtual"
     location_details TEXT,               -- e.g., "University Library", "Zoom"
-    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Match table: Stores matches between users
@@ -29,7 +29,7 @@ CREATE TABLE Match (
     score REAL NOT NULL,                 -- Compatibility score (e.g., 0.85)
     feedback INTEGER,                    -- User rating (1-5 stars)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE,
-    FOREIGN KEY (match_user_id) REFERENCES User(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (match_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify
+import jwt
+from flask import Blueprint, request, jsonify, current_app
+from datetime import datetime, timedelta
+
 from ..models.user_model import User
 from ..utils.database import get_db_connection
-from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -19,7 +21,7 @@ def signup():
     # Check if the email is already registered
     conn = get_db_connection()
     existing_user = conn.execute(
-        "SELECT * FROM User WHERE email = ?", (email,)
+        "SELECT * FROM users WHERE email = ?", (email,)
     ).fetchone()
     if existing_user:
         conn.close()
@@ -33,16 +35,21 @@ def signup():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """
-    Handle user login.
-    """
     data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
+    user = User.validate_login(data['email'], data['password'])
 
-    # Validate user credentials
-    user = User.find_by_email(email)
-    if user and check_password_hash(user['password_hash'], password):
-        return jsonify({"message": "Login successful"}), 200
+    if user:
+        conn = get_db_connection()
+        # Generate JWT token
+        token = jwt.encode({
+            'user_id': user.id,
+            'exp': datetime.utcnow() + timedelta(hours=1)  # Token expires in 1 hour
+        }, current_app.config['SECRET_KEY'], algorithm='HS256')
 
-    return jsonify({"error": "Invalid credentials"}), 401
+        return jsonify({
+            "message": "Login successful",
+            "token": token,
+            "user_id": user.id
+        }), 200
+    else:
+        return jsonify({"error": "Invalid credentials"}), 401
