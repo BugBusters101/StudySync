@@ -33,3 +33,14 @@ CREATE TABLE Match (
     FOREIGN KEY (match_user_id) REFERENCES User(id) ON DELETE CASCADE
 );
 
+-- ChatMessage table: Stores chat messages between users
+CREATE TABLE ChatMessage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,          -- User who sent the message
+    receiver_id INTEGER NOT NULL,        -- User who received the message
+    message TEXT NOT NULL,               -- Message content
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES User(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES User(id) ON DELETE CASCADE
+);
+

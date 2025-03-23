@@ -1,5 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
+
+from .controller.chat_controller import chat_bp
 from .controller.matching_controller import matching_bp
 from .controller.auth_controller import auth_bp
 
@@ -17,6 +19,7 @@ def create_app():
     # Register blueprints (routes)
     app.register_blueprint(matching_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(chat_bp)
 
 
     return app
