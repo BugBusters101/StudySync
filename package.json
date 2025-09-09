@@ -1,0 +1,12 @@
+{
+  "name": "study-sync",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [],
+  "scripts": {
+    "install:all": "npm --prefix study-sync-frontend install",
+    "dev": "npx concurrently -c \"bgBlue.bold,bgMagenta.bold\" -n \"BACKEND,FRONTEND\" \".venv/bin/python backend/run.py\" \"npm --prefix study-sync-frontend start\"",
+    "dev:backend": ".venv/bin/python backend/run.py",
+    "dev:frontend": "npm --prefix study-sync-frontend start"
+  }
+}

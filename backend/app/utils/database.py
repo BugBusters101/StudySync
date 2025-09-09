@@ -1,11 +1,15 @@
 import sqlite3
 from pathlib import Path
 
+
 def get_db_connection():
     """
     Create and return a connection to the SQLite database.
     """
-    conn = sqlite3.connect('study-buddy.db')
+    # Resolve the database path to the backend directory regardless of CWD
+    backend_dir = Path(__file__).resolve().parents[2]
+    db_path = backend_dir / "study-buddy.db"
+    conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row  # Access columns by name
     return conn
 

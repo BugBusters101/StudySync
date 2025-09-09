@@ -13,28 +13,42 @@ Before you begin, ensure you have met the following requirements:
 
 ## Installation
 
-### Backend Setup
+### 1) Clone the repository
+```
+git clone https://github.com/BugBusters101/StudySync
+cd StudySync
+```
 
-1. **Clone the repository:**
-    git clone https://github.com/BugBusters101/StudySync
+### 2) Backend setup (Python)
+Create and activate a virtual environment, then install dependencies.
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+```
 
-2. **Navigate to the backend directory:**
-    cd study-sync/backend
+Optional: initialize the local SQLite database (only if your DB is empty)
+```
+python -c "from backend.app.utils.database import init_db; init_db()"
+```
 
-3. **Run the backend server:**
-    python run.py
+### 3) Frontend setup (Node)
+Install frontend dependencies.
+```
+npm run install:all
+```
 
-### Frontend Setup
+### 4) Run both servers together
+This runs Flask at http://localhost:5000 and React at http://localhost:3000.
+```
+npm run dev
+```
 
-1. **Navigate to the frontend directory:**
-    cd ../study-sync-frontend
-
-2. **Install the required npm packages:**
-    npm install
-    npm install react-scripts react-router-dom@6 bootstrap@5 sass@1 @react-oauth/google@0 react-bootstrap@2 @fortawesome/react-fontawesome@0 @fortawesome/free-solid-svg-icons@6
-
-3. **Start the frontend development server:**
-    npm start
+Individual services (optional):
+```
+npm run dev:backend
+npm run dev:frontend
+```
 
 ## Usage
 
@@ -52,3 +66,9 @@ Before you begin, ensure you have met the following requirements:
 
 5. **Chat with your matches:**
     Use the chat functionality to communicate with your study partners.
+
+## Notes
+
+- The frontend has a proxy set to the backend (`http://localhost:5000`), so API calls from the React app are automatically forwarded.
+- The backend uses the SQLite database file at `backend/study-buddy.db`. The server now opens it via an absolute path, so it will always use this file regardless of the working directory.
+- If you prefer, you can delete the root `node_modules/`. The project uses `npx concurrently` from the root, and all React dependencies live in `study-sync-frontend/node_modules/`.
