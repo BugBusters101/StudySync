@@ -17,18 +17,16 @@ def token_required(f):
             return jsonify({"error": "Token is missing"}), 401
 
         try:
-            # Remove 'Bearer ' prefix if present
             if token.startswith('Bearer '):
                 token = token[7:]
 
-            # Decode the token
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-            print("Decoded Token Data:", data)  # Debug: Log decoded data
+            print("Decoded Token Data:", data)
             kwargs['user_id'] = data['user_id']
         except jwt.ExpiredSignatureError:
             return jsonify({"error": "Token has expired"}), 401
         except jwt.InvalidTokenError as e:
-            print("Token Validation Error:", str(e))  # Debug: Log the error
+            print("Token Validation Error:", str(e))
             return jsonify({"error": "Invalid token"}), 401
 
         return f( *args, **kwargs)
@@ -43,31 +41,26 @@ def generate_matches(**kwargs):
     """
     user_id = kwargs.get('user_id')
     print(user_id)
-    # Fetch the user's profile
     user_profile = Profile.find_by_user_id(user_id)
     if not user_profile:
         return jsonify({"error": "User profile not found in table"}), 404
 
-    # Fetch all profiles from the database
     conn = get_db_connection()
     all_profiles = conn.execute("SELECT * FROM Profile").fetchall()
     conn.close()
 
-    # Convert profiles to a list of dictionaries
     all_profiles = [dict(profile) for profile in all_profiles]
 
-    # Initialize the algorithm
-    users_df, processed_users, q_agent = initialize_algorithm()
+    users_df, processed_users, q_agent = initialize_algorithm(all_profiles)
 
-    # Compute similarity matrix
     similarity_matrix = compute_similarity(processed_users, q_agent.q_table)
+    print(similarity_matrix)
 
-    # Find top matches for the user
     user_index = next((i for i, profile in enumerate(all_profiles) if profile["user_id"] == user_id), None)
     if user_index is None:
         return jsonify({"error": "User not found in profiles"}), 404
 
-    top_matches = find_top_matches(user_index, similarity_matrix, users_df, top_k=3)
+    top_matches = find_top_matches(user_id, similarity_matrix, users_df, top_k=3)
 
     serializable_matches = []
     for match in top_matches:
@@ -79,5 +72,4 @@ def generate_matches(**kwargs):
                 serializable_match[key] = value
         serializable_matches.append(serializable_match)
 
-    # Return matches as JSON
     return jsonify(serializable_matches), 200

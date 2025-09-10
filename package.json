@@ -8,5 +8,8 @@
     "dev": "npx concurrently -c \"bgBlue.bold,bgMagenta.bold\" -n \"BACKEND,FRONTEND\" \".venv/bin/python backend/run.py\" \"npm --prefix study-sync-frontend start\"",
     "dev:backend": ".venv/bin/python backend/run.py",
     "dev:frontend": "npm --prefix study-sync-frontend start"
+  },
+  "dependencies": {
+    "cors": "^2.8.5"
   }
 }
