@@ -1,5 +1,6 @@
 flask>=3.0.0
 flask-cors>=4.0.0
+flask-socketio>=5.3.0
 PyJWT>=2.9.0
 flask-login>=0.6.3
 numpy>=1.26
