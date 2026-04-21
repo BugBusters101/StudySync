@@ -119,7 +119,7 @@ const Dashboard = () => {
               variant="outline-primary"
               size="sm"
               className="d-flex align-items-center gap-2"
-              onClick={rerunAlgorithm}
+              onClick={refreshMatches}
               disabled={isLoading}
             >
               <FontAwesomeIcon icon={faSync} spin={isLoading} />
