@@ -30,15 +30,12 @@ def signup():
         User.create(first_name, last_name, email, password)
         user = User.validate_login(email, password)
         
-        # Fire automatic overlap matching algorithm dynamically against seed profiles
+        # Fire automatic overlap matching algorithm dynamically
         try:
-            import sys
-            import os
-            sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
             from seed_data import generate_matches
             generate_matches(user.id)
         except ImportError as e:
-            print(f"Warning: Could not trigger seed matching natively - {e}")
+            print(f"Warning: Could not trigger seed matching - {e}")
             pass
         
         token = jwt.encode({
@@ -101,10 +98,12 @@ def get_me():
         data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
         user_id = data['user_id']
         conn = get_db_connection()
-        user = conn.execute("SELECT id, first_name, last_name, email FROM users WHERE id = ?", (user_id,)).fetchone()
+        cur = conn.cursor()
+        cur.execute("SELECT id, first_name, last_name, email FROM users WHERE id = %s", (user_id,))
+        user_row = cur.fetchone()
         conn.close()
-        if user:
-            return jsonify(dict(user)), 200
+        if user_row:
+            return jsonify(dict(user_row)), 200
         return jsonify({"error": "User not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 401

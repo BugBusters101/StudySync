@@ -12,8 +12,7 @@ def get_db_connection():
     
     if db_url:
         # PostgreSQL / Supabase
-        conn = psycopg2.connect(db_url)
-        # Use RealDictCursor to match sqlite3.Row functionality (access by name)
+        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
         return conn
     else:
         # Local SQLite
