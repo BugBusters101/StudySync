@@ -122,9 +122,9 @@ def register_socket_events(socketio):
         message = Message.create(user_id, other_user_id, message_text)
         
         # Also write to notification table for unread tracking
-        from ..utils.database import get_db_connection
         conn = get_db_connection()
-        conn.execute('INSERT INTO notifications (message_id, user_id, read_status) VALUES (?, ?, 0)', (message['id'], other_user_id))
+        cur = conn.cursor()
+        cur.execute('INSERT INTO notifications (message_id, user_id, read_status) VALUES (%s, %s, 0)', (message['id'], other_user_id))
         conn.commit()
         conn.close()
         
@@ -134,7 +134,7 @@ def register_socket_events(socketio):
             'sender_id': user_id,
             'receiver_id': other_user_id,
             'message': message_text,
-            'timestamp': message['created_at'],
+            'timestamp': str(message['created_at']),
             'is_read': 0
         }, room=room_name)
         logging.debug(f"[ChatEvent - SEND_MSG] Saved to DB and Emitted Payload out to Room {room_name}")
@@ -161,17 +161,17 @@ def register_socket_events(socketio):
         other_user_id = data.get('other_user_id')
         if other_user_id:
             logging.debug(f"[ChatEvent - MARK_READ] User {user_id} intercepting message payload. Marking messages from {other_user_id} as READ.")
-            from ..utils.database import get_db_connection
             conn = get_db_connection()
+            cur = conn.cursor()
             # Mark messages received from `other_user_id` as read
-            conn.execute('UPDATE messages SET is_read = 1 WHERE sender_id = ? AND receiver_id = ? AND is_read = 0', (other_user_id, user_id))
+            cur.execute('UPDATE messages SET is_read = 1 WHERE sender_id = %s AND receiver_id = %s AND is_read = 0', (other_user_id, user_id))
             
             # Clear associated notifications 
-            conn.execute('''
+            cur.execute('''
                 UPDATE notifications 
                 SET read_status = 1 
-                WHERE user_id = ? AND message_id IN (
-                    SELECT id FROM messages WHERE sender_id = ? AND receiver_id = ?
+                WHERE user_id = %s AND message_id IN (
+                    SELECT id FROM messages WHERE sender_id = %s AND receiver_id = %s
                 )
             ''', (user_id, other_user_id, user_id))
             conn.commit()
@@ -180,7 +180,9 @@ def register_socket_events(socketio):
             emit('messages_read', {'reader_id': user_id, 'sender_id': other_user_id}, room=room_name)
             
             # Recalculate and emit NEW total unread count to current user
-            total_unread = conn.execute('SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_status = 0', (user_id,)).fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM notifications WHERE user_id = %s AND read_status = 0', (user_id,))
+            row = cur.fetchone()
+            total_unread = row['count'] if hasattr(row, 'keys') else row[0]
             emit('total_unread_update', {'total_unread': total_unread}, room=f"user_ns_{user_id}")
             
             conn.close()
@@ -202,19 +204,21 @@ def get_contacts(**kwargs):
     user_id = kwargs.get('user_id')
     conn = get_db_connection()
     try:
+        cur = conn.cursor()
         # Fetch people user has messaged, joined with unread notification counts
         query = """
             SELECT DISTINCT 
                 u.id as match_user_id, u.first_name, u.last_name, u.email,
                 (SELECT COUNT(*) FROM notifications n 
-                 WHERE n.user_id = ? AND n.read_status = 0 
-                 AND n.message_id IN (SELECT id FROM messages WHERE sender_id = u.id AND receiver_id = ?)
+                 WHERE n.user_id = %s AND n.read_status = 0 
+                 AND n.message_id IN (SELECT id FROM messages WHERE sender_id = u.id AND receiver_id = %s)
                 ) as unread_count
             FROM messages msg
-            JOIN users u ON (CASE WHEN msg.sender_id = ? THEN msg.receiver_id ELSE msg.sender_id END) = u.id
-            WHERE msg.sender_id = ? OR msg.receiver_id = ?
+            JOIN users u ON (CASE WHEN msg.sender_id = %s THEN msg.receiver_id ELSE msg.sender_id END) = u.id
+            WHERE msg.sender_id = %s OR msg.receiver_id = %s
         """
-        history = conn.execute(query, (user_id, user_id, user_id, user_id, user_id)).fetchall()
+        cur.execute(query, (user_id, user_id, user_id, user_id, user_id))
+        history = cur.fetchall()
         
         return jsonify([dict(h) for h in history]), 200
     finally:
@@ -227,7 +231,10 @@ def get_total_unread(**kwargs):
     user_id = kwargs.get('user_id')
     conn = get_db_connection()
     try:
-        unread = conn.execute('SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_status = 0', (user_id,)).fetchone()[0]
+        cur = conn.cursor()
+        cur.execute('SELECT COUNT(*) FROM notifications WHERE user_id = %s AND read_status = 0', (user_id,))
+        row = cur.fetchone()
+        unread = row['count'] if hasattr(row, 'keys') else row[0]
         return jsonify({"total_unread": unread}), 200
     finally:
         conn.close()
