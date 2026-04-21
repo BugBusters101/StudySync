@@ -1,3 +1,8 @@
-.idea/StudySync.iml
-.idea/dataSources.xml
+.idea/
+.temp/
+node_modules/
 backend/study-buddy.db
+*.pyc
+__pycache__/
+.DS_Store
+.env

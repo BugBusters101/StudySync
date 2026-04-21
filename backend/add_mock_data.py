@@ -1,19 +1,20 @@
 from app.utils.database import get_db_connection
+from werkzeug.security import generate_password_hash
 
 def add_mock_users():
     conn = get_db_connection()
     # Add mock users
     conn.execute(
-        "INSERT INTO User (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
-        ("John", "Doe", "john.doe@example.com", "hashed_password1")
+        "INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
+        ("John", "Doe", "john.doe@example.com", generate_password_hash("password123"))
     )
     conn.execute(
-        "INSERT INTO User (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
-        ("Jane", "Smith", "jane.smith@example.com", "hashed_password2")
+        "INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
+        ("Jane", "Smith", "jane.smith@example.com", generate_password_hash("password456"))
     )
     conn.execute(
-        "INSERT INTO User (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
-        ("Alice", "Johnson", "alice.johnson@example.com", "hashed_password3")
+        "INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
+        ("Alice", "Johnson", "alice.johnson@example.com", generate_password_hash("password789"))
     )
     conn.commit()
 

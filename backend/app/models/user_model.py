@@ -3,12 +3,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin  # Required for Flask-Login
 
 class User(UserMixin):  # Inherit from UserMixin
-    def __init__(self, id, email, password_hash, first_name, last_name):
+    def __init__(self, id, email, password_hash, first_name, last_name, is_new_user=1):
         self.id = id
         self.email = email
         self.password_hash = password_hash
         self.first_name = first_name
         self.last_name = last_name
+        self.is_new_user = bool(is_new_user)
 
     @staticmethod
     def create(first_name, last_name, email, password):
@@ -32,7 +33,8 @@ class User(UserMixin):  # Inherit from UserMixin
                 email=email,
                 password_hash=password_hash,
                 first_name=first_name,
-                last_name=last_name
+                last_name=last_name,
+                is_new_user=1
             )
         except Exception as e:
             conn.rollback()
@@ -56,7 +58,8 @@ class User(UserMixin):  # Inherit from UserMixin
                     email=user_data['email'],
                     password_hash=user_data['password_hash'],
                     first_name=user_data['first_name'],
-                    last_name=user_data['last_name']
+                    last_name=user_data['last_name'],
+                    is_new_user=user_data['is_new_user']
                 )
             return None
         finally:
@@ -78,7 +81,8 @@ class User(UserMixin):  # Inherit from UserMixin
                     email=user_data['email'],
                     password_hash=user_data['password_hash'],
                     first_name=user_data['first_name'],
-                    last_name=user_data['last_name']
+                    last_name=user_data['last_name'],
+                    is_new_user=user_data['is_new_user']
                 )
             return None
         finally:

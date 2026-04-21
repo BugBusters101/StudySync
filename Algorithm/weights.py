@@ -14,7 +14,9 @@ class QLearningWeightAdjuster:
         Update Q-values (weights) based on user feedback (1-5 stars).
         Simplified Q-learning: Reward = feedback, no explicit state transitions.
         """
-        reward = feedback / 5.0  # Normalize feedback to [0, 1]
+        # Normalize feedback to [0, 1] and ensure it stays within 1-5
+        feedback = max(1.0, min(5.0, float(feedback)))
+        reward = feedback / 5.0
 
         # Update Q-values for each feature
         for feature in self.q_table:
@@ -25,5 +27,7 @@ class QLearningWeightAdjuster:
 
         # Normalize weights to sum to 1
         total = sum(self.q_table.values())
+        if total <= 0:
+            total = 1.0  # Prevent ZeroDivisionError and NaN corruption
         self.q_table = {k: v / total for k, v in self.q_table.items()}
         return self.q_table

@@ -1,114 +1,225 @@
-import { useState } from 'react';
-import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Button, Alert, Tabs, Tab, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faCalendarAlt, faMapMarkerAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate } from 'react-router-dom';
+import { faUsers, faCalendarAlt, faUserEdit, faClock, faGraduationCap, faSync, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
+import PreferencesForm from './PreferenceForm';
+import './Auth.css';
+
+const BADGE_MAP = [
+  { key: 'shared_subjects', label: 'Subjects', icon: faGraduationCap, cls: 'badge-subject' },
+  { key: 'shared_days', label: 'Days', icon: faCalendarAlt, cls: 'badge-day' },
+  { key: 'shared_slots', label: 'Time Slots', icon: faClock, cls: 'badge-time' },
+  { key: 'shared_style', label: 'Style', icon: faGraduationCap, cls: 'badge-style' },
+  { key: 'shared_location', label: 'Location', icon: faMapMarkerAlt, cls: 'badge-location' },
+];
 
 const Dashboard = () => {
+  const { userName, setUserName } = useContext(AuthContext);
   const [studyMatches, setStudyMatches] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeKey, setActiveKey] = useState('matches');
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const generateMatches = async () => {
+  useEffect(() => {
+    // If name is missing but we're authenticated, fetch it
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (token && !userName) {
+        try {
+          const res = await fetch('http://127.0.0.1:5000/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setUserName(data.first_name);
+          }
+        } catch (e) {}
+      }
+    };
+    fetchProfile();
+  }, [userName, setUserName]);
+
+  const fetchCachedMatches = async () => {
+    setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
-      const response = await fetch(`http://127.0.0.1:5000/matching`, {
-        headers: {
-          'Authorization': `Bearer ${token}`  // Include token for authentication
-        }
+      if (!token) throw new Error('No token found');
+      const response = await fetch('http://127.0.0.1:5000/matching/cached', {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) {
-        throw new Error('Failed to fetch matches');
-      }
+      if (!response.ok) throw new Error('Failed to load matches');
       const data = await response.json();
       setStudyMatches(data);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const editPreference = async () => {
+  const rerunAlgorithm = async () => {
+    setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
-      const response = await fetch(`http://127.0.0.1:5000/preference`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,  // Include token for authentication
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ /* Add preference data here */ })
+      const response = await fetch('http://127.0.0.1:5000/matching', {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) {
-        throw new Error('Failed to update preferences');
-      }
+      if (!response.ok) throw new Error('Failed to refresh matches');
       const data = await response.json();
-      console.log('Preferences updated:', data);
-    } catch (error) {
-      setError(error.message);
+      setStudyMatches(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchCachedMatches();
+    // If we came from Preferences with a 'showMatches' flag, show matches tab
+    if (location.state?.showMatches) {
+      setActiveKey('matches');
+      // If matches were passed directly in state, use them
+      if (location.state?.matches?.length > 0) {
+        setStudyMatches(location.state.matches);
+        setIsLoading(false);
+      }
+    }
+  }, [location.state]);
+
   return (
-    <Container className="py-4">
-      <Row className="mb-4">
-        <Col>
-          <h2 className="text-primary">
-            <FontAwesomeIcon icon={faUsers} className="me-2" />
-            Your Dashboard
-          </h2>
-        </Col>
-      </Row>
-
-      {error && <Alert variant="danger">{error}</Alert>}
-
+    <Container className="py-5 fade-in">
+      {/* Header */}
       <Row className="mb-4 align-items-center">
-        <Col>
-          <Button variant="primary" onClick={generateMatches}>
-            Generate Matches
-          </Button>
-        </Col>
-        <Col className="mb-4 align-items-right text-end">
-         <Button variant="primary" onClick={() => navigate('/preferences')}>
-            Edit Preference
-          </Button>
+        <Col lg={8}>
+          <h2 className="fw-bold mb-1" style={{ color: 'var(--ss-navy)', letterSpacing: '-0.02em' }}>
+            <FontAwesomeIcon icon={faUsers} className="me-3 text-primary"/>
+            Welcome back{userName ? `, ${userName}` : ''}!
+          </h2>
+          <p className="text-muted">Find compatible study partners based on your preferences.</p>
         </Col>
       </Row>
 
-      {/* Study Matches Section */}
-      <Row className="mb-4">
-        <Col>
-          <h4 className="mb-3">Your Top Matches</h4>
-          <Row xs={1} md={2} lg={3} className="g-4">
-            {studyMatches.map((match) => (
-              <Col key={match.match_user_id}>
-                <Card className="h-100 shadow-sm">
-                  <Card.Body>
-                    <Card.Title>User ID: {match.match_user_id}</Card.Title>
-                    <Card.Subtitle className="mb-2 text-muted">Score: {match.score.toFixed(2)}</Card.Subtitle>
-                    <div className="mb-2">
-                      <FontAwesomeIcon icon={faCalendarAlt} className="me-2 text-primary" />
-                      Shared Subjects: {match.shared_subjects.join(', ')}
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <Button variant="outline-primary" size="sm">
-                        Message
+      {error && <Alert variant="danger" className="border-0 shadow-sm rounded-3">{error}</Alert>}
+
+      <Tabs activeKey={activeKey} onSelect={setActiveKey} className="mb-4 custom-tabs">
+        {/* ── Matches ── */}
+        <Tab eventKey="matches" title="Matches">
+          <div className="d-flex justify-content-between align-items-center mb-4 mt-2">
+            <h4 className="mb-0 fw-bold" style={{ color: 'var(--ss-navy)' }}>Top Compatible Buddies</h4>
+            <Button
+              variant="outline-primary"
+              size="sm"
+              className="d-flex align-items-center gap-2"
+              onClick={rerunAlgorithm}
+              disabled={isLoading}
+            >
+              <FontAwesomeIcon icon={faSync} spin={isLoading} />
+              Refresh Matches
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" style={{ color: 'var(--ss-blue)' }} />
+              <p className="mt-3 text-muted">Finding your best study partners...</p>
+            </div>
+          ) : studyMatches.length === 0 ? (
+            <Card className="text-center p-5 border-0 shadow-sm" style={{ borderRadius: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <Card.Body>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                <h5 className="fw-bold" style={{ color: 'var(--ss-navy)' }}>No matches yet</h5>
+                <p className="text-muted small mb-4">Go to "Edit Profile" to set your preferences — matches will be generated automatically!</p>
+                <div style={{ maxWidth: '240px', margin: '0 auto' }}>
+                  <Button className="auth-btn" onClick={() => setActiveKey('profile')}>
+                    <FontAwesomeIcon icon={faUserEdit} className="me-2"/>
+                    Set Preferences
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Row xs={1} md={2} lg={3} className="g-4">
+              {studyMatches.map((match) => (
+                <Col key={match.match_user_id}>
+                  <Card className="h-100 shadow-sm border-0 match-card" style={{ borderRadius: '20px' }}>
+                    <Card.Body className="p-4 d-flex flex-column">
+                      {/* Name + Score */}
+                      <div className="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                          <h5 className="fw-bold mb-0" style={{ color: 'var(--ss-navy)' }}>
+                            {match.first_name} {match.last_name}
+                          </h5>
+                          <small className="text-muted">{match.email}</small>
+                        </div>
+                        {match.score && (
+                          <div className="badge px-2 py-1 rounded-pill fw-bold" style={{
+                            background: 'var(--ss-mint-light)', color: 'var(--ss-mint-dark)',
+                            border: '1px solid rgba(5,150,105,0.25)', fontSize: '0.8rem'
+                          }}>
+                            {(match.score * 100).toFixed(0)}% Match
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Overlap badges */}
+                      <div className="flex-grow-1 mb-3">
+                        <div className="d-flex text-muted small mb-2 align-items-center">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="me-2 text-primary" />
+                          <span className="fw-semibold">Overlap:</span>
+                        </div>
+                        {BADGE_MAP.every(b => (match[b.key] || []).length === 0) ? (
+                          <span className="text-muted small fst-italic">No overlap found</span>
+                        ) : (
+                          BADGE_MAP.map(({ key, label, cls }) => {
+                            const items = match[key] || [];
+                            if (items.length === 0) return null;
+                            return items.map(item => (
+                              <span key={`${key}-${item}`} className={`badge me-1 mb-1 px-2 py-1 ${cls}`} style={{ borderRadius: '6px', fontSize: '0.78rem' }}>
+                                {item}
+                              </span>
+                            ));
+                          })
+                        )}
+                      </div>
+
+                      <Button
+                        className="auth-btn w-100"
+                        onClick={() => navigate('/chat', { state: { match } })}
+                      >
+                        Start Chatting
                       </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        </Col>
-      </Row>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+        </Tab>
+
+        {/* ── Edit Profile ── */}
+        <Tab eventKey="profile" title="Edit Profile">
+          <Card className="border-0 shadow-sm" style={{ borderRadius: '20px' }}>
+            <Card.Header className="bg-white border-bottom py-3 px-4" style={{ borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }}>
+              <h5 className="mb-0 fw-bold" style={{ color: 'var(--ss-navy)' }}>
+                <FontAwesomeIcon icon={faUserEdit} className="me-2 text-primary" />
+                Study Preferences
+              </h5>
+            </Card.Header>
+            <Card.Body style={{ background: 'var(--ss-gray-50)', borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px' }}>
+              <PreferencesForm onSaveSuccess={(matches) => {
+                setStudyMatches(matches || []);
+                setActiveKey('matches');
+              }} />
+            </Card.Body>
+          </Card>
+        </Tab>
+      </Tabs>
     </Container>
   );
 };

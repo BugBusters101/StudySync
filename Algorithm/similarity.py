@@ -5,7 +5,20 @@ import pandas as pd
 
 
 def preprocess_users(df):
-    """Preprocess all features, including location"""
+    """Preprocess all features, including location with bounds to prevent DoS"""
+    df = df.copy()
+    
+    # Cap list lengths to prevent dimensionality explosion and memory exhaustion
+    for col in ['subjects', 'days_of_week', 'availability', 'location_details']:
+        df[col] = df[col].apply(lambda x: [str(i)[:100] for i in x][:50] if isinstance(x, (list, tuple, set)) else [])
+        
+    df['learning_style'] = df['learning_style'].astype(str).str[:100]
+    
+    # Safely extract from location_type
+    df['location_type'] = df['location_type'].apply(
+        lambda loc: [str(i)[:100] for i in loc][:1] if isinstance(loc, (list, tuple, set)) and len(loc) > 0 else ['Unknown']
+    )
+
     mlb = MultiLabelBinarizer()
     subjects_encoded = mlb.fit_transform(df['subjects'])
     subjects_df = pd.DataFrame(subjects_encoded, columns=[f"subject_{cls}" for cls in mlb.classes_])
@@ -17,7 +30,7 @@ def preprocess_users(df):
     availability_df = pd.DataFrame(availability_encoded, columns=[f"availability_{cls}" for cls in mlb.classes_])
 
     learning_style_df = pd.get_dummies(df['learning_style'], prefix='style')
-    location_type_df = pd.get_dummies(df['location_type'].apply(lambda loc: list(loc)[0]), prefix='loc_type')
+    location_type_df = pd.get_dummies(df['location_type'].apply(lambda loc: loc[0]), prefix='loc_type')
 
     location_details_encoded = mlb.fit_transform(df['location_details'])
     location_details_df = pd.DataFrame(location_details_encoded, columns=[f"loc_details_{cls}" for cls in mlb.classes_])
@@ -43,4 +56,4 @@ def compute_similarity(users_df, weights):
     weighted_vectors[loc_type_cols] *= weights["location_type"]
     weighted_vectors[loc_details_cols] *= weights["location_details"]
 
-    return cosine_similarity(weighted_vectors)
+    return weighted_vectors

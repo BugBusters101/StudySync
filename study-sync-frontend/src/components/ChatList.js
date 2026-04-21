@@ -1,34 +1,30 @@
 import React from 'react';
 import { ListGroup, Badge } from 'react-bootstrap';
-import { FaCircle } from 'react-icons/fa6';  // For solid circle icon
+import { FaCircle } from 'react-icons/fa6';
 
-const ChatList = ({ matches, onSelectMatch }) => {
-  // Mock data
-  const mockMatches = [
-    { id: 1, name: 'Sarah Johnson', unread: 2, online: true },
-    { id: 2, name: 'Mike Chen', unread: 0, online: false },
-    { id: 3, name: 'Emma Wilson', unread: 5, online: true },
-  ];
-
+const ChatList = ({ matches = [], onSelectMatch }) => {
   return (
     <ListGroup variant="flush">
-      {mockMatches.map(match => (
+      {matches.length === 0 && (
+         <div className="text-center text-muted p-3">No study buddies yet!</div>
+      )}
+      {matches.map(match => (
         <ListGroup.Item
-          key={match.id}
+          key={match.match_user_id}
           action
           onClick={() => onSelectMatch(match)}
-          className="d-flex justify-content-between align-items-center"
+          className="chat-list-item d-flex justify-content-between align-items-center"
         >
           <div className="d-flex align-items-center gap-2">
             <FaCircle
               size={10}
               className={match.online ? 'text-success' : 'text-secondary'}
             />
-            <span>{match.name}</span>
+            <span>{match.first_name} {match.last_name}</span>
           </div>
-          {match.unread > 0 && (
+          {match.unread_count > 0 && (
             <Badge pill bg="danger">
-              {match.unread}
+              {match.unread_count}
             </Badge>
           )}
         </ListGroup.Item>

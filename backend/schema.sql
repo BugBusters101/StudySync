@@ -5,6 +5,8 @@ CREATE TABLE users (
     last_name TEXT NOT NULL,             -- User last name
     email TEXT UNIQUE NOT NULL,          -- User email (unique)
     password_hash TEXT NOT NULL,         -- Hashed password
+    is_new_user INTEGER DEFAULT 1,       -- Tracks onboarding status (1=new)
+    last_seen TIMESTAMP,                 -- Tracks socket-active online checks
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -39,8 +41,23 @@ CREATE TABLE messages (
     sender_id INTEGER NOT NULL,          -- User who sent the message
     receiver_id INTEGER NOT NULL,        -- User who received the message
     message TEXT NOT NULL,               -- Message content
+    is_read INTEGER DEFAULT 0,           -- Boolean read status indicator
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_msg_sender ON messages(sender_id);
+CREATE INDEX idx_msg_receiver ON messages(receiver_id);
+
+-- Notifications table: Stores unread message alerts
+CREATE TABLE notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id INTEGER NOT NULL,         -- Reference to the message trigger
+    user_id INTEGER NOT NULL,            -- User possessing the notification
+    read_status INTEGER DEFAULT 0,       -- 0 if unread, 1 if read
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(message_id) REFERENCES messages(id) ON DELETE CASCADE
 );
 

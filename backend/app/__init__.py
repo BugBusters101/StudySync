@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -13,7 +14,8 @@ def create_app():
     Create and configure the Flask app.
     """
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = '6a762414be7364ad1a3b68cea122294f'
+    # Use a stable secret key in development to maintain sessions across reloads
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'studysync_dev_key_12345')
 
     # Initialize SocketIO with CORS support
     socketio.init_app(app, cors_allowed_origins=[
