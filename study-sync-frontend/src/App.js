@@ -5,7 +5,6 @@ import Login from './Pages/Login';
 import Signup from './Pages/SignUp';
 import Dashboard from './Pages/Dashboard';
 import PreferencesForm from './Pages/PreferenceForm';
-import Profile from './Pages/Profile';
 import ChatPage from './Pages/ChatPage';
 import {AuthProvider} from "./contexts/AuthContext";
 import { ProtectedRoute } from './components/ProtectedRoute';

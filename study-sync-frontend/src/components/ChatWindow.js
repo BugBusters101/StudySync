@@ -69,7 +69,7 @@ const ChatWindow = ({ selectedMatch }) => {
           clearTimeout(typingDisplayTimeoutRef.current);
        };
     }
-  }, [selectedMatch, socket, joinRoom]);
+  }, [selectedMatch, socket, joinRoom, emitMarkRead, myUserId]);
 
   useEffect(() => {
      scrollToBottom();

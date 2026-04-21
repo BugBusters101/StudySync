@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Navbar as BSNavbar, Container, Nav, Badge } from 'react-bootstrap';
+import { Navbar as BSNavbar, Container, Nav } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faUsers, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
