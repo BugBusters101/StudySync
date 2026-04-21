@@ -30,7 +30,7 @@ def create_app():
                 "allow_headers": ["Content-Type", "Authorization"],
             }
         },
-        supports_credentials=True,
+        supports_credentials=False,
     )
 
     app.config.from_pyfile('config.py', silent=True)

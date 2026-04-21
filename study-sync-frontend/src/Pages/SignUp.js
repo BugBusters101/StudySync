@@ -158,9 +158,9 @@ const Signup = () => {
 
               <div className="auth-divider">or</div>
 
-              <div className="google-btn-wrapper">
+              {/* <div className="google-btn-wrapper">
                 <GoogleLoginButton />
-              </div>
+              </div> */}
             </Form>
           </div>
         </div>
