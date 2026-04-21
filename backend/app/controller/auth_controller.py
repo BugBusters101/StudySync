@@ -20,7 +20,9 @@ def signup():
 
     conn = get_db_connection()
     try:
-        existing_user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+        existing_user = cur.fetchone()
         
         if existing_user:
             return jsonify({"error": "Account with this email already exists"}), 409

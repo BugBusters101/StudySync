@@ -17,17 +17,18 @@ class Message:
         """
         conn = get_db_connection()
         try:
-            cursor = conn.execute(
-                "INSERT INTO messages (sender_id, receiver_id, message, created_at) VALUES (?, ?, ?, ?)",
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO messages (sender_id, receiver_id, message, created_at) "
+                "VALUES (%s, %s, %s, %s) RETURNING id",
                 (sender_id, receiver_id, message_text, datetime.utcnow())
             )
-            message_id = cursor.lastrowid
+            row = cur.fetchone()
+            message_id = row['id'] if hasattr(row, 'keys') else row[0]
             conn.commit()
             
-            # Return the created message
-            message = conn.execute(
-                "SELECT * FROM messages WHERE id = ?", (message_id,)
-            ).fetchone()
+            cur.execute("SELECT * FROM messages WHERE id = %s", (message_id,))
+            message = cur.fetchone()
             
             return dict(message) if message else None
         finally:
@@ -48,14 +49,16 @@ class Message:
         """
         conn = get_db_connection()
         try:
-            messages = conn.execute(
+            cur = conn.cursor()
+            cur.execute(
                 """SELECT * FROM messages 
-                   WHERE (sender_id = ? AND receiver_id = ?) 
-                   OR (sender_id = ? AND receiver_id = ?)
+                   WHERE (sender_id = %s AND receiver_id = %s) 
+                   OR (sender_id = %s AND receiver_id = %s)
                    ORDER BY created_at DESC 
-                   LIMIT ?""",
+                   LIMIT %s""",
                 (user1_id, user2_id, user2_id, user1_id, limit)
-            ).fetchall()
+            )
+            messages = cur.fetchall()
             
             # Convert to list of dictionaries and reverse to get chronological order
             return [dict(msg) for msg in reversed(messages)]
@@ -75,20 +78,22 @@ class Message:
         """
         conn = get_db_connection()
         try:
+            cur = conn.cursor()
             # Get distinct users this user has chatted with
-            conversations = conn.execute(
+            cur.execute(
                 """SELECT DISTINCT 
                       CASE 
-                        WHEN sender_id = ? THEN receiver_id 
+                        WHEN sender_id = %s THEN receiver_id 
                         ELSE sender_id 
                       END as other_user_id,
                       MAX(created_at) as last_message_time
                    FROM messages 
-                   WHERE sender_id = ? OR receiver_id = ?
+                   WHERE sender_id = %s OR receiver_id = %s
                    GROUP BY other_user_id
                    ORDER BY last_message_time DESC""",
                 (user_id, user_id, user_id)
-            ).fetchall()
+            )
+            conversations = cur.fetchall()
             
             return [dict(conv) for conv in conversations]
         finally:

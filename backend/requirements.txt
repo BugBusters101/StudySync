@@ -6,3 +6,7 @@ flask-login>=0.6.3
 numpy>=1.26
 pandas>=2.2
 scikit-learn>=1.4
+psycopg2-binary
+gunicorn
+eventlet
+python-dotenv

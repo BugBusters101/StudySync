@@ -7,8 +7,10 @@ class Profile:
         Fetch a profile by user ID.
         """
         conn = get_db_connection()
-        profile = conn.execute(
-            "SELECT * FROM Profile WHERE user_id = ?", (user_id,)
-        ).fetchone()
-        conn.close()
-        return dict(profile) if profile else None
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM Profile WHERE user_id = %s", (user_id,))
+            profile = cur.fetchone()
+            return dict(profile) if profile else None
+        finally:
+            conn.close()

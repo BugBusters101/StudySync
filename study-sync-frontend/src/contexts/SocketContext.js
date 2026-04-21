@@ -21,14 +21,15 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (isAuthenticated && token) {
-      const newSocket = io('http://127.0.0.1:5000', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+      const newSocket = io(API_URL, {
         auth: { token: token },
         query: { token: token }
       });
 
       newSocket.on('connect', () => {
         setIsConnected(true);
-        fetch('http://127.0.0.1:5000/chat/unread/total', {
+        fetch(`${API_URL}/chat/unread/total`, {
            headers: { 'Authorization': `Bearer ${token}` }
         })
         .then(res => res.json())

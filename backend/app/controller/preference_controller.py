@@ -30,15 +30,16 @@ def token_required(f):
 @preferences_bp.route('/preferences', methods=['GET'])
 @token_required
 def get_preferences(**kwargs):
-    """Fetch the saved preferences for the current user (for pre-populating the edit form)."""
+    """Fetch the saved preferences for the current user."""
     user_id = kwargs.get('user_id')
     conn = get_db_connection()
     try:
-        row = conn.execute('SELECT * FROM Profile WHERE user_id = ?', (user_id,)).fetchone()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM Profile WHERE user_id = %s', (user_id,))
+        row = cur.fetchone()
         if not row:
             return jsonify({}), 200
         prefs = dict(row)
-        # Parse JSON strings back into lists
         for field in ['subjects', 'days_of_week', 'availability', 'learning_style', 'location_type', 'location_details']:
             if isinstance(prefs.get(field), str):
                 try:
@@ -60,37 +61,43 @@ def save_preferences(**kwargs):
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        subjects       = data.get('courses', [])
-        days_of_week   = data.get('days_of_week', [])
-        time_slots     = data.get('timeSlots', [])
-        learning_style = data.get('learning_style', [])
-        location_type  = data.get('location_type', [])
+        subjects         = data.get('courses', [])
+        days_of_week     = data.get('days_of_week', [])
+        time_slots       = data.get('timeSlots', [])
+        learning_style   = data.get('learning_style', [])
+        location_type    = data.get('location_type', [])
         location_details = data.get('location_details', [])
 
         conn = get_db_connection()
-        conn.execute(
-            'INSERT OR REPLACE INTO Profile '
-            '(user_id, subjects, days_of_week, availability, learning_style, location_type, location_details) '
-            'VALUES (?, ?, ?, ?, ?, ?, ?)',
+        cur = conn.cursor()
+        
+        # PostgreSQL ON CONFLICT syntax
+        cur.execute(
+            """INSERT INTO Profile (user_id, subjects, days_of_week, availability, learning_style, location_type, location_details)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
+               ON CONFLICT (user_id) DO UPDATE SET
+               subjects = EXCLUDED.subjects,
+               days_of_week = EXCLUDED.days_of_week,
+               availability = EXCLUDED.availability,
+               learning_style = EXCLUDED.learning_style,
+               location_type = EXCLUDED.location_type,
+               location_details = EXCLUDED.location_details""",
             (
                 user_id,
                 json.dumps(subjects), json.dumps(days_of_week), json.dumps(time_slots),
                 json.dumps(learning_style), json.dumps(location_type), json.dumps(location_details)
             )
         )
-        conn.execute('UPDATE users SET is_new_user = 0 WHERE id = ?', (user_id,))
+        cur.execute('UPDATE users SET is_new_user = 0 WHERE id = %s', (user_id,))
         conn.commit()
 
-        # ── Auto-generate matches and persist them in the Match table ──
+        # ── Auto-generate matches ──
         matches_data = []
         try:
-            import numpy as np
-            from Algorithm.main import find_top_matches, initialize_algorithm, compute_similarity
-
-            all_profiles_raw = conn.execute(
+            cur.execute(
                 'SELECT p.*, u.first_name, u.last_name, u.email FROM Profile p JOIN users u ON p.user_id = u.id'
-            ).fetchall()
-
+            )
+            all_profiles_raw = cur.fetchall()
             all_profiles = []
             for profile in all_profiles_raw:
                 p = dict(profile)
@@ -103,34 +110,24 @@ def save_preferences(**kwargs):
                 all_profiles.append(p)
 
             if len(all_profiles) >= 2:
+                from Algorithm.main import find_top_matches, initialize_algorithm, compute_similarity
                 users_df, processed_users, q_agent = initialize_algorithm(all_profiles)
                 similarity_matrix = compute_similarity(processed_users, q_agent.q_table)
                 top_matches = find_top_matches(user_id, similarity_matrix, users_df, top_k=3)
 
-                # Persist matches in the Match table
-                conn.execute('DELETE FROM Match WHERE user_id = ?', (user_id,))
+                cur.execute('DELETE FROM Match WHERE user_id = %s', (user_id,))
                 for m in top_matches:
-                    conn.execute(
-                        'INSERT OR IGNORE INTO Match (user_id, match_user_id, score) VALUES (?, ?, ?)',
+                    cur.execute(
+                        'INSERT INTO Match (user_id, match_user_id, score) VALUES (%s, %s, %s) '
+                        'ON CONFLICT DO NOTHING',
                         (user_id, m['match_user_id'], m['score'])
                     )
                 conn.commit()
-
-                # Serialize numpy types
                 for m in top_matches:
-                    serialized = {}
-                    for key, val in m.items():
-                        if isinstance(val, (list,)):
-                            serialized[key] = val
-                        elif hasattr(val, 'item'):
-                            serialized[key] = val.item()
-                        else:
-                            serialized[key] = val
-                    matches_data.append(serialized)
+                    matches_data.append({k: (v.item() if hasattr(v, 'item') else v) for k, v in m.items()})
         except Exception as algo_err:
             print(f"Match generation warning: {algo_err}")
 
-        from datetime import datetime, timedelta
         token = jwt.encode({
             'user_id': user_id,
             'is_new_user': False,

@@ -31,7 +31,8 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
       if (token && !userName) {
         try {
-          const res = await fetch('http://127.0.0.1:5000/me', {
+          const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+          const res = await fetch(`${API_URL}/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.ok) {
@@ -48,32 +49,34 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
-      const response = await fetch('http://127.0.0.1:5000/matching/cached', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+      const response = await fetch(`${API_URL}/matching/cached`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Failed to load matches');
       const data = await response.json();
       setStudyMatches(data);
     } catch (err) {
-      setError(err.message);
+      console.error("Match error:", err);
+      setError('Failed to load your study matches. Please try refreshing.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const rerunAlgorithm = async () => {
+  const refreshMatches = async () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://127.0.0.1:5000/matching', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+      const response = await fetch(`${API_URL}/matching`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Failed to refresh matches');
       const data = await response.json();
       setStudyMatches(data);
     } catch (err) {
-      setError(err.message);
+      setError('Could not refresh matches. Please try again later.');
     } finally {
       setIsLoading(false);
     }

@@ -1,18 +1,27 @@
 import sqlite3
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from pathlib import Path
-
 
 def get_db_connection():
     """
-    Create and return a connection to the SQLite database.
+    Create and return a connection to either PostgreSQL (production) or SQLite (development).
     """
-    # Resolve the database path to the backend directory regardless of CWD
-    backend_dir = Path(__file__).resolve().parents[2]
-    db_path = backend_dir / "study-buddy.db"
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row  # Access columns by name
-    return conn
-
+    db_url = os.environ.get('DATABASE_URL')
+    
+    if db_url:
+        # PostgreSQL / Supabase
+        conn = psycopg2.connect(db_url)
+        # Use RealDictCursor to match sqlite3.Row functionality (access by name)
+        return conn
+    else:
+        # Local SQLite
+        backend_dir = Path(__file__).resolve().parents[2]
+        db_path = backend_dir / "study-buddy.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
     """
@@ -20,16 +29,20 @@ def init_db():
     """
     conn = get_db_connection()
     try:
-        # Construct the path to schema.sql
         schema_path = Path(__file__).parent.parent.parent / "schema.sql"
-
-        # Check if the schema file exists
         if not schema_path.exists():
             raise FileNotFoundError(f"Schema file not found at: {schema_path}")
 
-        # Read and execute the schema script
         with open(schema_path, 'r') as f:
-            conn.executescript(f.read())
+            query = f.read()
+            
+        cur = conn.cursor()
+        if hasattr(conn, 'executescript'):
+            # SQLite
+            conn.executescript(query)
+        else:
+            # PostgreSQL
+            cur.execute(query)
         conn.commit()
         print("Database initialized successfully!")
     except Exception as e:

@@ -17,9 +17,9 @@ const ChatPage = () => {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://127.0.0.1:5000/chat/contacts', {
-          headers: { 'Authorization': `Bearer ${token}` }
+        const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+        const response = await fetch(`${API_URL}/chat/contacts`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         if (!response.ok) throw new Error('Failed to load contacts');
         const data = await response.json();

@@ -40,7 +40,8 @@ const PreferencesForm = ({ onSaveSuccess } = {}) => {
       setIsLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://127.0.0.1:5000/preferences', {
+        const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+        const response = await fetch(`${API_URL}/preferences`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -84,7 +85,8 @@ const PreferencesForm = ({ onSaveSuccess } = {}) => {
     setIsSaving(true);
     setError('');
     try {
-      const response = await fetch('http://127.0.0.1:5000/preferences', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+      const response = await fetch(`${API_URL}/preferences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -32,22 +32,25 @@ def token_required(f):
 @matching_bp.route('/matching/cached', methods=['GET'])
 @token_required
 def get_cached_matches(**kwargs):
-    """Return pre-computed matches from the Match table (no algorithm rerun)."""
+    """Return pre-computed matches from the Match table."""
     user_id = kwargs.get('user_id')
     conn = get_db_connection()
     try:
-        rows = conn.execute("""
+        cur = conn.cursor()
+        cur.execute("""
             SELECT m.match_user_id, m.score,
                    u.first_name, u.last_name, u.email,
                    p.subjects, p.days_of_week, p.availability, p.learning_style, p.location_type
             FROM Match m
             JOIN users u ON m.match_user_id = u.id
             LEFT JOIN Profile p ON m.match_user_id = p.user_id
-            WHERE m.user_id = ?
+            WHERE m.user_id = %s
             ORDER BY m.score DESC
-        """, (user_id,)).fetchall()
+        """, (user_id,))
+        rows = cur.fetchall()
 
-        me_row = conn.execute('SELECT * FROM Profile WHERE user_id = ?', (user_id,)).fetchone()
+        cur.execute('SELECT * FROM Profile WHERE user_id = %s', (user_id,))
+        me_row = cur.fetchone()
         me = dict(me_row) if me_row else {}
         for field in ['subjects', 'days_of_week', 'availability', 'learning_style', 'location_type']:
             if isinstance(me.get(field), str):
@@ -84,22 +87,21 @@ def get_cached_matches(**kwargs):
 @matching_bp.route('/matching', methods=['GET'])
 @token_required
 def generate_matches(**kwargs):
-    """
-    Generate matches for a user using the algorithm, enriched with user details.
-    """
+    """Generate matches for a user using the algorithm."""
     user_id = kwargs.get('user_id')
     user_profile = Profile.find_by_user_id(user_id)
     if not user_profile:
         return jsonify({"error": "User profile not found in table"}), 404
 
     conn = get_db_connection()
-    # Join with users table to get names
+    cur = conn.cursor()
     query = """
         SELECT p.*, u.first_name, u.last_name, u.email 
         FROM Profile p
         JOIN users u ON p.user_id = u.id
     """
-    all_profiles_raw = conn.execute(query).fetchall()
+    cur.execute(query)
+    all_profiles_raw = cur.fetchall()
     conn.close()
 
     all_profiles = []

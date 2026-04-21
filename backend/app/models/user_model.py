@@ -20,13 +20,14 @@ class User(UserMixin):  # Inherit from UserMixin
         conn = get_db_connection()
         try:
             password_hash = generate_password_hash(password)
-            cursor = conn.execute(
-                # Changed table name to 'users' (SQLite reserved word fix)
+            cur = conn.cursor()
+            cur.execute(
                 "INSERT INTO users (first_name, last_name, email, password_hash) "
-                "VALUES (?, ?, ?, ?) RETURNING id",
+                "VALUES (%s, %s, %s, %s) RETURNING id",
                 (first_name, last_name, email, password_hash)
             )
-            user_id = cursor.fetchone()['id']
+            row = cur.fetchone()
+            user_id = row['id'] if hasattr(row, 'keys') else row[0]
             conn.commit()
             return User(
                 id=user_id,
@@ -49,9 +50,9 @@ class User(UserMixin):  # Inherit from UserMixin
         """
         conn = get_db_connection()
         try:
-            user_data = conn.execute(
-                "SELECT * FROM users WHERE email = ?", (email,)
-            ).fetchone()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+            user_data = cur.fetchone()
             if user_data:
                 return User(
                     id=user_data['id'],
@@ -72,9 +73,9 @@ class User(UserMixin):  # Inherit from UserMixin
         """
         conn = get_db_connection()
         try:
-            user_data = conn.execute(
-                "SELECT * FROM users WHERE id = ?", (user_id,)
-            ).fetchone()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            user_data = cur.fetchone()
             if user_data:
                 return User(
                     id=user_data['id'],
