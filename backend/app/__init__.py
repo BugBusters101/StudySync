@@ -17,24 +17,17 @@ def create_app():
     # Use a stable secret key in development to maintain sessions across reloads
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'studysync_dev_key_12345')
 
-    # Initialize SocketIO with CORS support
-    socketio.init_app(app, cors_allowed_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000"
-    ])
+    # Initialize SocketIO with wide CORS support for production
+    socketio.init_app(app, cors_allowed_origins="*")
 
-    # Explicit CORS configuration for local dev (frontend on :3000)
+    # Wide CORS configuration for production hosting
     CORS(
         app,
         resources={
             r"/*": {
-                "origins": [
-                    "http://localhost:3000",
-                    "http://127.0.0.1:3000"
-                ],
+                "origins": "*",
                 "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
                 "allow_headers": ["Content-Type", "Authorization"],
-                "expose_headers": ["Content-Type", "Authorization"],
             }
         },
         supports_credentials=True,
