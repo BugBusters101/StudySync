@@ -32,7 +32,7 @@ def signup():
         
         # Fire automatic overlap matching algorithm dynamically
         try:
-            from seed_data import generate_matches
+            from seed_production import generate_matches
             generate_matches(user.id)
         except ImportError as e:
             print(f"Warning: Could not trigger seed matching - {e}")
