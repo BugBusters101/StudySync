@@ -4,7 +4,7 @@ import json
 import jwt
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, current_app
-from ..utils.database import get_db_connection
+from ..utils.database import get_db_connection, exec_sql
 
 preferences_bp = Blueprint('preferences', __name__)
 
@@ -36,7 +36,7 @@ def get_preferences(**kwargs):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute('SELECT * FROM Profile WHERE user_id = %s', (user_id,))
+        exec_sql(cur, conn, 'SELECT * FROM Profile WHERE user_id = %s', (user_id,))
         row = cur.fetchone()
         if not row:
             return jsonify({}), 200
@@ -73,7 +73,9 @@ def save_preferences(**kwargs):
         cur = conn.cursor()
         
         # PostgreSQL ON CONFLICT syntax
-        cur.execute(
+        exec_sql(
+            cur,
+            conn,
             """INSERT INTO Profile (user_id, subjects, days_of_week, availability, learning_style, location_type, location_details)
                VALUES (%s, %s, %s, %s, %s, %s, %s)
                ON CONFLICT (user_id) DO UPDATE SET
@@ -87,16 +89,18 @@ def save_preferences(**kwargs):
                 user_id,
                 json.dumps(subjects), json.dumps(days_of_week), json.dumps(time_slots),
                 json.dumps(learning_style), json.dumps(location_type), json.dumps(location_details)
-            )
+            ),
         )
-        cur.execute('UPDATE users SET is_new_user = 0 WHERE id = %s', (user_id,))
+        exec_sql(cur, conn, 'UPDATE users SET is_new_user = 0 WHERE id = %s', (user_id,))
         conn.commit()
 
         # ── Auto-generate matches ──
         matches_data = []
         try:
-            cur.execute(
-                'SELECT p.*, u.first_name, u.last_name, u.email FROM Profile p JOIN users u ON p.user_id = u.id'
+            exec_sql(
+                cur,
+                conn,
+                'SELECT p.*, u.first_name, u.last_name, u.email FROM Profile p JOIN users u ON p.user_id = u.id',
             )
             all_profiles_raw = cur.fetchall()
             all_profiles = []
@@ -116,12 +120,14 @@ def save_preferences(**kwargs):
                 similarity_matrix = compute_similarity(processed_users, q_agent.q_table)
                 top_matches = find_top_matches(user_id, similarity_matrix, users_df, top_k=3)
 
-                cur.execute('DELETE FROM Match WHERE user_id = %s', (user_id,))
+                exec_sql(cur, conn, 'DELETE FROM Match WHERE user_id = %s', (user_id,))
                 for m in top_matches:
-                    cur.execute(
+                    exec_sql(
+                        cur,
+                        conn,
                         'INSERT INTO Match (user_id, match_user_id, score) VALUES (%s, %s, %s) '
                         'ON CONFLICT DO NOTHING',
-                        (user_id, m['match_user_id'], m['score'])
+                        (user_id, m['match_user_id'], m['score']),
                     )
                 conn.commit()
                 for m in top_matches:

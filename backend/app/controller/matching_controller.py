@@ -4,7 +4,7 @@ import numpy as np
 import json
 from flask import Blueprint, jsonify, request, current_app
 from ..models.profile_model import Profile
-from ..utils.database import get_db_connection
+from ..utils.database import get_db_connection, exec_sql
 from Algorithm.main import find_top_matches, initialize_algorithm, compute_similarity
 
 matching_bp = Blueprint('matching', __name__)
@@ -37,7 +37,10 @@ def get_cached_matches(**kwargs):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("""
+        exec_sql(
+            cur,
+            conn,
+            """
             SELECT m.match_user_id, m.score,
                    u.first_name, u.last_name, u.email,
                    p.subjects, p.days_of_week, p.availability, p.learning_style, p.location_type
@@ -46,10 +49,12 @@ def get_cached_matches(**kwargs):
             LEFT JOIN Profile p ON m.match_user_id = p.user_id
             WHERE m.user_id = %s
             ORDER BY m.score DESC
-        """, (user_id,))
+        """,
+            (user_id,),
+        )
         rows = cur.fetchall()
 
-        cur.execute('SELECT * FROM Profile WHERE user_id = %s', (user_id,))
+        exec_sql(cur, conn, 'SELECT * FROM Profile WHERE user_id = %s', (user_id,))
         me_row = cur.fetchone()
         me = dict(me_row) if me_row else {}
         for field in ['subjects', 'days_of_week', 'availability', 'learning_style', 'location_type']:

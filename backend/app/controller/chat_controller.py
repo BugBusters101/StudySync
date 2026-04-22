@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_socketio import emit, join_room, leave_room
-from ..utils.database import get_db_connection
+from ..utils.database import get_db_connection, exec_sql
 from ..models.message_model import Message
 import jwt
 from functools import wraps
@@ -124,7 +124,7 @@ def register_socket_events(socketio):
         # Also write to notification table for unread tracking
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('INSERT INTO notifications (message_id, user_id, read_status) VALUES (%s, %s, 0)', (message['id'], other_user_id))
+        exec_sql(cur, conn, 'INSERT INTO notifications (message_id, user_id, read_status) VALUES (%s, %s, 0)', (message['id'], other_user_id))
         conn.commit()
         conn.close()
         
@@ -164,25 +164,30 @@ def register_socket_events(socketio):
             conn = get_db_connection()
             cur = conn.cursor()
             # Mark messages received from `other_user_id` as read
-            cur.execute('UPDATE messages SET is_read = 1 WHERE sender_id = %s AND receiver_id = %s AND is_read = 0', (other_user_id, user_id))
+            exec_sql(cur, conn, 'UPDATE messages SET is_read = 1 WHERE sender_id = %s AND receiver_id = %s AND is_read = 0', (other_user_id, user_id))
             
             # Clear associated notifications 
-            cur.execute('''
+            exec_sql(
+                cur,
+                conn,
+                '''
                 UPDATE notifications 
                 SET read_status = 1 
                 WHERE user_id = %s AND message_id IN (
                     SELECT id FROM messages WHERE sender_id = %s AND receiver_id = %s
                 )
-            ''', (user_id, other_user_id, user_id))
+            ''',
+                (user_id, other_user_id, user_id),
+            )
             conn.commit()
             
             room_name = f"chat_{min(user_id, other_user_id)}_{max(user_id, other_user_id)}"
             emit('messages_read', {'reader_id': user_id, 'sender_id': other_user_id}, room=room_name)
             
             # Recalculate and emit NEW total unread count to current user
-            cur.execute('SELECT COUNT(*) FROM notifications WHERE user_id = %s AND read_status = 0', (user_id,))
+            exec_sql(cur, conn, 'SELECT COUNT(*) FROM notifications WHERE user_id = %s AND read_status = 0', (user_id,))
             row = cur.fetchone()
-            total_unread = row['count'] if hasattr(row, 'keys') else row[0]
+            total_unread = row[0]
             emit('total_unread_update', {'total_unread': total_unread}, room=f"user_ns_{user_id}")
             
             conn.close()
@@ -217,7 +222,7 @@ def get_contacts(**kwargs):
             JOIN users u ON (CASE WHEN msg.sender_id = %s THEN msg.receiver_id ELSE msg.sender_id END) = u.id
             WHERE msg.sender_id = %s OR msg.receiver_id = %s
         """
-        cur.execute(query, (user_id, user_id, user_id, user_id, user_id))
+        exec_sql(cur, conn, query, (user_id, user_id, user_id, user_id, user_id))
         history = cur.fetchall()
         
         return jsonify([dict(h) for h in history]), 200
@@ -232,9 +237,9 @@ def get_total_unread(**kwargs):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute('SELECT COUNT(*) FROM notifications WHERE user_id = %s AND read_status = 0', (user_id,))
+        exec_sql(cur, conn, 'SELECT COUNT(*) FROM notifications WHERE user_id = %s AND read_status = 0', (user_id,))
         row = cur.fetchone()
-        unread = row['count'] if hasattr(row, 'keys') else row[0]
+        unread = row[0]
         return jsonify({"total_unread": unread}), 200
     finally:
         conn.close()

@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime, timedelta
 
 from ..models.user_model import User
-from ..utils.database import get_db_connection
+from ..utils.database import get_db_connection, exec_sql
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -21,7 +21,7 @@ def signup():
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+        exec_sql(cur, conn, "SELECT * FROM users WHERE email = %s", (email,))
         existing_user = cur.fetchone()
         
         if existing_user:
@@ -99,7 +99,7 @@ def get_me():
         user_id = data['user_id']
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT id, first_name, last_name, email FROM users WHERE id = %s", (user_id,))
+        exec_sql(cur, conn, "SELECT id, first_name, last_name, email FROM users WHERE id = %s", (user_id,))
         user_row = cur.fetchone()
         conn.close()
         if user_row:

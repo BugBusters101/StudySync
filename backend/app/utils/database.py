@@ -4,6 +4,20 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from pathlib import Path
 
+
+def exec_sql(cur, conn, sql, params=None):
+    """
+    Run a query using psycopg2-style %s placeholders. For SQLite connections,
+    placeholders are rewritten to ? so the same SQL works in dev and production.
+    """
+    if params is None:
+        cur.execute(sql)
+    elif isinstance(conn, sqlite3.Connection):
+        cur.execute(sql.replace('%s', '?'), params)
+    else:
+        cur.execute(sql, params)
+
+
 def get_db_connection():
     """
     Create and return a connection to either PostgreSQL (production) or SQLite (development).
