@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Home from './Pages/Home';
 import Login from './Pages/Login';
@@ -10,7 +11,17 @@ import {AuthProvider} from "./contexts/AuthContext";
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SocketProvider } from './contexts/SocketContext';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+
 function App() {
+  // Keep the Render backend warm to avoid cold-start delays
+  useEffect(() => {
+    const ping = () => fetch(`${API_URL}/`).catch(() => {});
+    ping(); // ping immediately on load
+    const interval = setInterval(ping, 9 * 60 * 1000); // every 9 minutes
+    return () => clearInterval(interval);
+  }, []);
+
   return (
       <AuthProvider>
           <SocketProvider>
