@@ -2,7 +2,7 @@ import json
 from werkzeug.security import generate_password_hash
 import random
 import os
-from app.utils.database import get_db_connection
+from app.utils.database import get_db_connection, exec_sql
 
 def generate_matches(new_user_id):
     """
@@ -12,22 +12,32 @@ def generate_matches(new_user_id):
     cur = conn.cursor()
     # Random selection differs slightly in Postgres (RANDOM()) vs SQLite (RANDOM())
     # Both actually use RANDOM() usually, but ordering might vary.
-    cur.execute("SELECT id FROM users WHERE id != %s ORDER BY RANDOM() LIMIT %s", (new_user_id, random.randint(3, 5)))
+    exec_sql(cur, conn, "SELECT id FROM users WHERE id != %s ORDER BY RANDOM() LIMIT %s", (new_user_id, random.randint(3, 5)))
     potential_matches = [r['id'] if hasattr(r, 'keys') else r[0] for r in cur.fetchall()]
     
     for match_id in potential_matches:
         score = round(random.uniform(0.65, 0.98), 2)
         
         # INSERT ... ON CONFLICT DO NOTHING (Postgres compatible)
-        cur.execute("""
+        exec_sql(
+            cur,
+            conn,
+            """
             INSERT INTO Match (user_id, match_user_id, score)
             VALUES (%s, %s, %s) ON CONFLICT DO NOTHING
-        """, (new_user_id, match_id, score))
-        
-        cur.execute("""
+        """,
+            (new_user_id, match_id, score),
+        )
+
+        exec_sql(
+            cur,
+            conn,
+            """
             INSERT INTO Match (user_id, match_user_id, score)
             VALUES (%s, %s, %s) ON CONFLICT DO NOTHING
-        """, (match_id, new_user_id, score))
+        """,
+            (match_id, new_user_id, score),
+        )
 
     conn.commit()
     conn.close()
@@ -37,9 +47,9 @@ def run_seed():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT COUNT(*) FROM users")
+    exec_sql(cur, conn, "SELECT COUNT(*) FROM users")
     row = cur.fetchone()
-    count = row['count'] if hasattr(row, 'keys') else row[0]
+    count = row[0]
 
     if count >= 10:
         print("[!] Database already populated. Skipping seed.")
@@ -65,19 +75,29 @@ def run_seed():
 
     for p in seed_profiles:
         try:
-            cur.execute("""
+            exec_sql(
+                cur,
+                conn,
+                """
                 INSERT INTO users (first_name, last_name, email, password_hash, is_new_user)
                 VALUES (%s, %s, %s, %s, 0) RETURNING id
-            """, (p[0], p[1], p[2], password_hash))
+            """,
+                (p[0], p[1], p[2], password_hash),
+            )
             row = cur.fetchone()
             user_id = row['id'] if hasattr(row, 'keys') else row[0]
             
             subjects = json.dumps(p[3].split(','))
             availability = json.dumps([p[4]])
-            cur.execute("""
+            exec_sql(
+                cur,
+                conn,
+                """
                 INSERT INTO Profile (user_id, subjects, days_of_week, availability, learning_style, location_type, location_details)
                 VALUES (%s, %s, '[]', %s, '[]', '[]', '[]')
-            """, (user_id, subjects, availability))
+            """,
+                (user_id, subjects, availability),
+            )
             
             conn.commit()
             generate_matches(user_id)

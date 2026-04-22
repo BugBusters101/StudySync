@@ -1,4 +1,4 @@
-from ..utils.database import get_db_connection
+from ..utils.database import get_db_connection, exec_sql
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin  # Required for Flask-Login
 
@@ -21,10 +21,12 @@ class User(UserMixin):  # Inherit from UserMixin
         try:
             password_hash = generate_password_hash(password)
             cur = conn.cursor()
-            cur.execute(
+            exec_sql(
+                cur,
+                conn,
                 "INSERT INTO users (first_name, last_name, email, password_hash) "
                 "VALUES (%s, %s, %s, %s) RETURNING id",
-                (first_name, last_name, email, password_hash)
+                (first_name, last_name, email, password_hash),
             )
             row = cur.fetchone()
             user_id = row['id'] if hasattr(row, 'keys') else row[0]
@@ -51,7 +53,7 @@ class User(UserMixin):  # Inherit from UserMixin
         conn = get_db_connection()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+            exec_sql(cur, conn, "SELECT * FROM users WHERE email = %s", (email,))
             user_data = cur.fetchone()
             if user_data:
                 return User(
@@ -74,7 +76,7 @@ class User(UserMixin):  # Inherit from UserMixin
         conn = get_db_connection()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            exec_sql(cur, conn, "SELECT * FROM users WHERE id = %s", (user_id,))
             user_data = cur.fetchone()
             if user_data:
                 return User(

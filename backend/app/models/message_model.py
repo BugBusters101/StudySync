@@ -1,4 +1,4 @@
-from ..utils.database import get_db_connection
+from ..utils.database import get_db_connection, exec_sql
 from datetime import datetime
 
 class Message:
@@ -18,16 +18,18 @@ class Message:
         conn = get_db_connection()
         try:
             cur = conn.cursor()
-            cur.execute(
+            exec_sql(
+                cur,
+                conn,
                 "INSERT INTO messages (sender_id, receiver_id, message, created_at) "
                 "VALUES (%s, %s, %s, %s) RETURNING id",
-                (sender_id, receiver_id, message_text, datetime.utcnow())
+                (sender_id, receiver_id, message_text, datetime.utcnow()),
             )
             row = cur.fetchone()
             message_id = row['id'] if hasattr(row, 'keys') else row[0]
             conn.commit()
             
-            cur.execute("SELECT * FROM messages WHERE id = %s", (message_id,))
+            exec_sql(cur, conn, "SELECT * FROM messages WHERE id = %s", (message_id,))
             message = cur.fetchone()
             
             return dict(message) if message else None
@@ -50,13 +52,15 @@ class Message:
         conn = get_db_connection()
         try:
             cur = conn.cursor()
-            cur.execute(
+            exec_sql(
+                cur,
+                conn,
                 """SELECT * FROM messages 
                    WHERE (sender_id = %s AND receiver_id = %s) 
                    OR (sender_id = %s AND receiver_id = %s)
                    ORDER BY created_at DESC 
                    LIMIT %s""",
-                (user1_id, user2_id, user2_id, user1_id, limit)
+                (user1_id, user2_id, user2_id, user1_id, limit),
             )
             messages = cur.fetchall()
             
@@ -80,7 +84,9 @@ class Message:
         try:
             cur = conn.cursor()
             # Get distinct users this user has chatted with
-            cur.execute(
+            exec_sql(
+                cur,
+                conn,
                 """SELECT DISTINCT 
                       CASE 
                         WHEN sender_id = %s THEN receiver_id 
@@ -91,7 +97,7 @@ class Message:
                    WHERE sender_id = %s OR receiver_id = %s
                    GROUP BY other_user_id
                    ORDER BY last_message_time DESC""",
-                (user_id, user_id, user_id)
+                (user_id, user_id, user_id),
             )
             conversations = cur.fetchall()
             

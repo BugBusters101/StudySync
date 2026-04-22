@@ -1,4 +1,4 @@
-from ..utils.database import get_db_connection
+from ..utils.database import get_db_connection, exec_sql
 
 class Profile:
     @staticmethod
@@ -9,7 +9,7 @@ class Profile:
         conn = get_db_connection()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT * FROM Profile WHERE user_id = %s", (user_id,))
+            exec_sql(cur, conn, "SELECT * FROM Profile WHERE user_id = %s", (user_id,))
             profile = cur.fetchone()
             return dict(profile) if profile else None
         finally:
